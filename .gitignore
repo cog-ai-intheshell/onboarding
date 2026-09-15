@@ -1,0 +1,13 @@
+# Données locales et identifiants d’accès
+access_codes.json
+drafts.json
+responses.json
+
+# Variables d’environnement
+.env
+.env.*
+
+# Fichiers générés par Python et macOS
+__pycache__/
+*.py[cod]
+.DS_Store

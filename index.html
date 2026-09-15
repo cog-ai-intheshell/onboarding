@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Onboarding du bootcamp NXT — prépare ton projet avant le grand saut." />
+    <meta name="theme-color" content="#08090c" />
+    <title>NXT — Bootcamp Onboarding</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=2" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="brand" href="#home" aria-label="NXT, retour à l’accueil">
+        <span class="brand__symbol" aria-hidden="true"></span>
+        <span>NXT</span>
+      </a>
+      <div class="header-status">
+        <span class="header-status__dot" aria-hidden="true"></span>
+        <span>Accès privé</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" id="home" aria-labelledby="hero-title">
+        <div class="hero__halo hero__halo--one" aria-hidden="true"></div>
+        <div class="hero__halo hero__halo--two" aria-hidden="true"></div>
+        <div class="hero__line" aria-hidden="true"></div>
+
+        <div class="hero__content">
+          <div class="hero__copy">
+            <p class="eyebrow"><span>Bootcamp intensif</span><span>Onboarding</span></p>
+            <h1 id="hero-title">Tout commence<br />par le bon <em>défi.</em></h1>
+            <p class="hero__lead">
+              Donne-nous le contexte. Nous préparerons une expérience qui fait vraiment avancer ton projet.
+            </p>
+            <div class="hero__facts" aria-label="Informations sur le questionnaire">
+              <div><strong id="hero-question-count">10</strong><span>questions</span></div>
+              <div><strong>8 min</strong><span>en moyenne</span></div>
+              <div><strong>100%</strong><span>confidentiel</span></div>
+            </div>
+          </div>
+
+          <aside class="access-card">
+            <div class="access-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12a1 1 0 0 1 1 1v9H5v-9a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.7" />
+                <path d="M12 14v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              </svg>
+            </div>
+            <p class="eyebrow">Accès participant</p>
+            <h2>Entre dans<br />l’expérience.</h2>
+            <p>Renseigne le code reçu avec ton invitation pour débloquer ton onboarding.</p>
+
+            <form id="access-form" novalidate>
+              <label class="field-label" for="access-code">Code d’accès</label>
+              <div class="code-field">
+                <input id="access-code" name="code" type="text" autocomplete="one-time-code" placeholder="NXT-XXXX" maxlength="64" required />
+                <span class="code-field__check" aria-hidden="true">✓</span>
+              </div>
+              <p class="field-error" id="access-error" role="alert"></p>
+              <button class="button button--primary button--wide" type="submit">
+                <span>Commencer</span><span aria-hidden="true">→</span>
+              </button>
+            </form>
+            <p class="access-card__note">Ton code ne fonctionne pas ? Contacte l’équipe du bootcamp.</p>
+          </aside>
+        </div>
+
+        <div class="hero__footer" aria-hidden="true"><span></span>Une expérience pensée pour toi</div>
+      </section>
+
+    </main>
+
+    <script src="app.js?v=9" defer></script>
+  </body>
+</html>

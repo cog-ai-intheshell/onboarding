@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#08090c" />
+    <title>Administration — NXT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=14" />
+  </head>
+  <body class="admin-page">
+    <header class="site-header admin-header">
+      <a class="brand" href="/" aria-label="NXT, retour à l’accueil">
+        <span class="brand__symbol" aria-hidden="true"></span>
+        <span>NXT</span>
+      </a>
+      <span class="admin-header__label">Administration</span>
+    </header>
+
+    <main>
+      <section class="admin-login" id="admin-login" aria-labelledby="login-title">
+        <div class="admin-login__content">
+          <p class="admin-eyebrow">Espace privé</p>
+          <h1 id="login-title">Connexion</h1>
+          <p>Entre le mot de passe administrateur pour consulter les réponses.</p>
+          <form id="admin-login-form" novalidate>
+            <label for="admin-password">Mot de passe</label>
+            <input id="admin-password" name="password" type="password" autocomplete="current-password" required autofocus />
+            <p class="admin-error" id="login-error" role="alert"></p>
+            <button class="button button--primary button--wide" type="submit">
+              <span>Se connecter</span><span aria-hidden="true">→</span>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <section class="admin-dashboard" id="admin-dashboard" hidden>
+        <div class="admin-dashboard__heading">
+          <div>
+            <p class="admin-eyebrow">Réponses reçues</p>
+            <h1>Participants</h1>
+          </div>
+          <button class="admin-logout" id="admin-logout" type="button">Se déconnecter</button>
+        </div>
+
+        <div class="admin-toolbar">
+          <p><strong id="submission-count">0</strong> soumission<span id="submission-plural">s</span></p>
+          <label class="admin-search">
+            <span class="sr-only">Rechercher une soumission</span>
+            <input id="submission-search" type="search" placeholder="Rechercher par ID ou code…" />
+          </label>
+        </div>
+
+        <div class="admin-loading" id="admin-loading">Chargement des réponses…</div>
+        <div class="submission-list" id="submission-list"></div>
+        <div class="admin-empty" id="admin-empty" hidden>
+          <h2>Aucune réponse pour le moment.</h2>
+          <p>Les questionnaires envoyés apparaîtront ici.</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="admin.js?v=1" defer></script>
+  </body>
+</html>

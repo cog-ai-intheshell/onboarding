@@ -1,0 +1,94 @@
+{
+  "questions": [
+    {
+      "id": "presentation",
+      "title": "Présente-toi.",
+      "helper": "Qui es-tu, quel est ton parcours et qu’est-ce qui t’anime aujourd’hui ?",
+      "placeholder": "Je suis…",
+      "required": true,
+      "minLength": 10,
+      "maxLength": 1200
+    },
+    {
+      "id": "maitrises",
+      "title": "Quelles expertises maîtrises-tu ?",
+      "helper": "Parle-nous de tes savoir-faire, outils, méthodes ou domaines de prédilection.",
+      "placeholder": "Mes principales forces sont…",
+      "required": true,
+      "minLength": 5,
+      "maxLength": 1200
+    },
+    {
+      "id": "entreprise_projet",
+      "title": "Présente ton entreprise ou ton projet.",
+      "helper": "La mission, le produit, les personnes concernées… donne-nous le contexte essentiel.",
+      "placeholder": "Mon projet consiste à…",
+      "required": true,
+      "minLength": 10,
+      "maxLength": 1200
+    },
+    {
+      "id": "avancement",
+      "title": "Où en es-tu aujourd’hui ?",
+      "helper": "Idée, validation du marché, lancement, croissance ou transformation : décris ton étape et ce qu’elle implique.",
+      "placeholder": "Aujourd’hui, mon projet en est à…",
+      "required": true,
+      "minLength": 5,
+      "maxLength": 1200
+    },
+    {
+      "id": "probleme_prioritaire",
+      "title": "Quel problème concret veux-tu absolument avoir fait avancer avant de repartir ?",
+      "helper": "Plus le problème sera précis, plus nous pourrons t’aider à créer du mouvement.",
+      "placeholder": "À la fin du bootcamp, je veux avoir…",
+      "required": true,
+      "minLength": 10,
+      "maxLength": 1200
+    },
+    {
+      "id": "comportement",
+      "title": "Quel comportement voudrais-tu mieux comprendre ou faire évoluer ?",
+      "helper": "Le tien, celui d’un client, d’une équipe ou d’un marché.",
+      "placeholder": "J’aimerais mieux comprendre pourquoi…",
+      "required": true,
+      "minLength": 10,
+      "maxLength": 1200
+    },
+    {
+      "id": "solutions_testees",
+      "title": "Qu’as-tu déjà essayé pour résoudre ce problème ? Avec quels résultats ?",
+      "helper": "Même les tentatives imparfaites ou les échecs sont précieux pour comprendre le terrain.",
+      "placeholder": "J’ai déjà testé… Cela a donné…",
+      "required": true,
+      "minLength": 10,
+      "maxLength": 1200
+    },
+    {
+      "id": "attentes",
+      "title": "Qu’attends-tu de ce bootcamp ?",
+      "helper": "Compétences, méthodes, prises de conscience, rencontres… sois spécifique.",
+      "placeholder": "J’attends de cette expérience…",
+      "required": true,
+      "minLength": 10,
+      "maxLength": 1200
+    },
+    {
+      "id": "pourquoi_maintenant",
+      "title": "Pourquoi veux-tu faire ce bootcamp maintenant ?",
+      "helper": "Qu’est-ce qui rend ce moment particulier ou urgent pour toi ?",
+      "placeholder": "C’est le bon moment parce que…",
+      "required": true,
+      "minLength": 10,
+      "maxLength": 1200
+    },
+    {
+      "id": "format_prefere",
+      "title": "Comment préfères-tu vivre ce bootcamp ?",
+      "helper": "Seul·e ou avec d’autres participants ? Explique-nous le cadre dans lequel tu te sentirais le mieux.",
+      "placeholder": "Je préférerais… parce que…",
+      "required": true,
+      "minLength": 10,
+      "maxLength": 1200
+    }
+  ]
+}

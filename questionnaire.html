@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Questionnaire d’onboarding du bootcamp NXT." />
+    <meta name="theme-color" content="#08090c" />
+    <title>Ton onboarding — NXT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=8" />
+  </head>
+  <body class="questionnaire-page">
+    <div class="grain" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="NXT, retour à l’accueil">
+        <span class="brand__symbol" aria-hidden="true"></span>
+        <span>NXT</span>
+      </a>
+      <div class="header-status">
+        <span class="header-status__dot" aria-hidden="true"></span>
+        <span>Session ouverte</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="questionnaire questionnaire--simple" id="questionnaire" aria-labelledby="questionnaire-title">
+        <div class="questionnaire__content">
+          <div class="simple-progress">
+            <h1 id="questionnaire-title">Questionnaire</h1>
+            <p>Prends quelques minutes pour nous parler de toi, de ton projet et de ce que tu souhaites faire avancer pendant ce bootcamp.</p>
+          </div>
+
+          <div class="loading-state" id="loading-state" aria-live="polite">
+            <span></span><p>Préparation de ton questionnaire…</p>
+          </div>
+
+          <form id="question-form" class="question-form" novalidate hidden>
+            <div class="question-list" id="question-list"></div>
+
+            <div class="simple-submit">
+              <button class="button button--ghost" id="save-draft-button" type="button">
+                <span>Sauvegarder mes réponses et revenir plus tard</span>
+              </button>
+              <button class="button button--primary" id="submit-button" type="submit">
+                <span>Envoyer mes réponses</span><span aria-hidden="true">→</span>
+              </button>
+            </div>
+            <p class="save-status" id="save-status" role="status"></p>
+            <p class="submit-error" id="submit-error" role="alert"></p>
+          </form>
+        </div>
+      </section>
+
+      <section class="success" id="success" aria-labelledby="success-title" hidden>
+        <div class="success__content">
+          <div class="success__check" aria-hidden="true"><span>✓</span></div>
+          <p class="eyebrow">Onboarding complété</p>
+          <h2 id="success-title">C’est envoyé.</h2>
+          <p>Merci d’avoir pris le temps. L’équipe dispose maintenant de tout ce qu’il faut pour préparer ton bootcamp.</p>
+          <div class="success__meta">
+            <div><span>Statut</span><strong>Profil prêt</strong></div>
+            <div><span>Prochaine étape</span><strong>Le bootcamp</strong></div>
+          </div>
+          <a class="button button--ghost" href="/">Retour à l’accueil</a>
+        </div>
+      </section>
+    </main>
+
+    <template id="question-template">
+      <article class="question-card">
+        <label class="question-title"></label>
+        <p class="question-helper"></p>
+        <textarea class="answer-input" rows="4"></textarea>
+        <span class="answer-error" role="alert"></span>
+      </article>
+    </template>
+
+    <script src="app.js?v=9" defer></script>
+  </body>
+</html>
