@@ -103,9 +103,7 @@ Exemple :
   "title": "Présente-toi",
   "helper": "Parle-nous brièvement de ton parcours et de ce qui t’anime aujourd’hui.",
   "placeholder": "Ton parcours, tes expériences, tes motivations…",
-  "required": true,
-  "minLength": 10,
-  "maxLength": 1200
+  "required": true
 }
 ```
 
@@ -118,10 +116,10 @@ Propriétés disponibles :
 | `helper` | Courte explication affichée sous la question. |
 | `placeholder` | Exemple discret affiché dans la zone de réponse. |
 | `required` | Indique si la réponse est obligatoire. |
-| `minLength` | Nombre minimal de caractères attendu. |
-| `maxLength` | Nombre maximal de caractères autorisé. |
 
 Le champ `id` doit rester unique. Évite de le modifier après avoir reçu des réponses, car il sert à relier les réponses enregistrées à leur question.
+
+Les zones de réponse n’imposent aucune longueur minimale ou maximale. Une question requise doit simplement contenir une réponse non vide.
 
 ## Sauvegarde des données
 

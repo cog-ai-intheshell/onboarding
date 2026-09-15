@@ -147,7 +147,6 @@ function initializeQuestionnairePage() {
       const row = elements.questionTemplate.content.firstElementChild.cloneNode(true);
       const input = row.querySelector(".answer-input");
       const label = row.querySelector(".question-title");
-      const limit = Number(question.maxLength) || 1200;
 
       row.dataset.questionId = question.id;
       label.textContent = question.title;
@@ -157,8 +156,6 @@ function initializeQuestionnairePage() {
       input.name = question.id;
       input.placeholder = question.placeholder || "Ta réponse…";
       input.required = question.required !== false;
-      input.minLength = Number(question.minLength) || 1;
-      input.maxLength = limit;
       input.value = state.answers[question.id] || "";
       markComplete(row, isAnswerValid(question, input.value));
 
@@ -177,8 +174,7 @@ function initializeQuestionnairePage() {
   }
 
   function isAnswerValid(question, value) {
-    if (question.required === false && value.trim() === "") return true;
-    return value.trim().length >= (Number(question.minLength) || 1);
+    return question.required === false || value.trim().length > 0;
   }
 
   function markComplete(row, complete) {
@@ -190,7 +186,7 @@ function initializeQuestionnairePage() {
     const shouldShow = !valid && (showEmptyAsError || value.trim() !== "");
     row.classList.toggle("is-invalid", shouldShow);
     row.querySelector(".answer-error").textContent = shouldShow
-      ? `Ajoute quelques mots pour continuer (${Number(question.minLength) || 1} caractères minimum).`
+      ? "Cette réponse est requise."
       : "";
     return valid;
   }

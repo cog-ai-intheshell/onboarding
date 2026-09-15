@@ -37,13 +37,6 @@ def read_json(path: Path, fallback):
         return fallback
 
 
-def bounded_int(value, default: int, minimum: int, maximum: int) -> int:
-    try:
-        return max(minimum, min(int(value), maximum))
-    except (TypeError, ValueError):
-        return default
-
-
 def write_json_atomic(path: Path, data) -> None:
     temporary_file = path.with_suffix(".tmp")
     with temporary_file.open("w", encoding="utf-8") as file:
@@ -79,16 +72,12 @@ def get_questions() -> list[dict]:
         if not isinstance(title, str) or not title.strip():
             continue
         seen_ids.add(question_id)
-        min_length = bounded_int(entry.get("minLength"), 1, 1, 500)
-        max_length = bounded_int(entry.get("maxLength"), 1200, 100, 5000)
         questions.append({
             "id": question_id,
             "title": title.strip(),
             "helper": str(entry.get("helper", "")).strip(),
             "placeholder": str(entry.get("placeholder", "Ta réponse…")).strip(),
             "required": entry.get("required", True) is not False,
-            "minLength": min(min_length, max_length),
-            "maxLength": max_length,
         })
     return questions
 
@@ -262,7 +251,7 @@ class OnboardingHandler(SimpleHTTPRequestHandler):
         for question in questions:
             value = answers.get(question["id"], "")
             if isinstance(value, str) and value.strip():
-                clean_answers[question["id"]] = value.strip()[: question["maxLength"]]
+                clean_answers[question["id"]] = value.strip()
 
         with WRITE_LOCK:
             drafts = read_json(DRAFTS_FILE, {})
@@ -296,10 +285,10 @@ class OnboardingHandler(SimpleHTTPRequestHandler):
                 self.send_json({"message": f"La réponse « {question['title']} » est invalide."}, HTTPStatus.BAD_REQUEST)
                 return
             value = value.strip()
-            if question["required"] and len(value) < question["minLength"]:
+            if question["required"] and not value:
                 self.send_json({"message": f"La réponse « {question['title']} » est incomplète."}, HTTPStatus.BAD_REQUEST)
                 return
-            clean_answers[question["id"]] = value[: question["maxLength"]]
+            clean_answers[question["id"]] = value
 
         submission = {
             "id": secrets.token_hex(8),
