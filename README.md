@@ -197,7 +197,6 @@ NXT_SERVER_SECRET="un-secret-long-et-aleatoire" python3 server.py
 | `admin.html` | Connexion et consultation administrateur. |
 | `styles.css` | Styles du site et tokens de couleur. |
 | `app.js` | Accès participant, questionnaire et sauvegarde. |
-| `experience.js` | Compte à rebours de l’offre pilote. |
 | `admin.js` | Connexion et affichage des réponses côté administrateur. |
 | `questions.json` | Questions et explications du questionnaire. |
 | `access_codes.example.json` | Modèle public de configuration des codes. |
