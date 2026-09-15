@@ -499,6 +499,17 @@ blockquote::first-letter { color: var(--color-accent); }
 .text-introduction h1 { margin: 0 0 50px; font: 700 clamp(52px, 7vw, 82px)/1 var(--font-display); letter-spacing: -.065em; }
 .text-page__content p, .text-page__content li { color: var(--color-text-muted); font-size: 18px; line-height: 1.78; }
 .text-page__content p { margin-bottom: 24px; }
+.pilot-offer { position: relative; overflow: hidden; margin-top: 58px; padding: clamp(30px, 5vw, 48px); border: 1px solid var(--color-border-strong); border-radius: var(--radius-medium); background: linear-gradient(145deg, var(--color-surface-raised), var(--color-background-soft)); box-shadow: var(--shadow-card); }
+.pilot-offer::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--color-accent); }
+.pilot-offer__eyebrow { margin: 0 0 20px !important; color: var(--color-accent-bright) !important; font-size: 10px !important; font-weight: 700; letter-spacing: .17em; text-transform: uppercase; }
+.pilot-offer h2 { max-width: 620px; margin: 0 0 26px; font: 700 clamp(28px, 4vw, 40px)/1.15 var(--font-display); letter-spacing: -.045em; }
+.pilot-offer > p:not(.pilot-offer__eyebrow) { max-width: 630px; }
+.pilot-offer > p strong { color: var(--color-text); font-weight: 600; }
+.pilot-offer__meta { margin-top: 38px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+.pilot-offer__meta div { display: flex; flex-direction: column; gap: 7px; }
+.pilot-offer__meta span { color: var(--color-text-dim); font-size: 10px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+.pilot-offer__meta strong { color: var(--color-text); font: 700 clamp(22px, 3vw, 29px)/1.15 var(--font-display); letter-spacing: -.035em; }
+.pilot-offer__meta small { color: var(--color-text-muted); font-size: .5em; letter-spacing: .05em; }
 .text-section { margin-bottom: 110px; }
 .text-section h2 { max-width: 680px; margin: 0 0 34px; font: 700 clamp(34px, 4vw, 48px)/1.1 var(--font-display); letter-spacing: -.05em; }
 .text-section h3 { margin: 48px 0 10px; font: 600 24px/1.25 var(--font-display); letter-spacing: -.035em; }
@@ -517,6 +528,9 @@ blockquote::first-letter { color: var(--color-accent); }
   .text-introduction { margin-bottom: 90px; }
   .text-introduction h1 { margin-bottom: 38px; font-size: 50px; }
   .text-page__content p, .text-page__content li { font-size: 16px; }
+  .pilot-offer { margin-top: 44px; padding: 30px 26px; }
+  .pilot-offer h2 { font-size: 29px; }
+  .pilot-offer__meta { grid-template-columns: 1fr; gap: 22px; }
   .text-section { margin-bottom: 82px; }
   .text-section h2 { font-size: 34px; }
   .text-section h3 { margin-top: 40px; font-size: 22px; }
