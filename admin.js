@@ -226,7 +226,8 @@ function setCodeFeedback(message, error = false, success = false) {
 function renderSubmissions(query = "") {
   const normalizedQuery = query.trim().toLowerCase();
   const filtered = adminState.submissions.filter((submission) => {
-    const searchable = `${submission.id || ""} ${submission.accessCode || ""}`.toLowerCase();
+    const participant = submission.participant || {};
+    const searchable = `${submission.id || ""} ${submission.accessCode || ""} ${participant.firstName || ""} ${participant.lastName || ""} ${participant.email || ""} ${participant.phone || ""}`.toLowerCase();
     return searchable.includes(normalizedQuery);
   });
 
@@ -239,13 +240,15 @@ function renderSubmissions(query = "") {
 }
 
 function createSubmission(submission) {
+  const participant = submission.participant || {};
+  const participantName = [participant.firstName, participant.lastName].filter(Boolean).join(" ") || "Profil non renseigné";
   const details = document.createElement("details");
   details.className = "submission";
   const summary = document.createElement("summary");
   summary.innerHTML = `
     <span class="submission__identity">
-      <small>ID</small>
-      <strong>${escapeAdminHtml(submission.id || "Sans identifiant")}</strong>
+      <small>Participant</small>
+      <strong>${escapeAdminHtml(participantName)}</strong>
     </span>
     <span class="submission__code">
       <small>Code</small>
@@ -258,6 +261,16 @@ function createSubmission(submission) {
 
   const answersContainer = document.createElement("div");
   answersContainer.className = "submission__answers";
+  const participantElement = document.createElement("div");
+  participantElement.className = "submission__participant";
+  participantElement.innerHTML = `
+    <div><small>Prénom</small><strong>${escapeAdminHtml(participant.firstName || "—")}</strong></div>
+    <div><small>Nom</small><strong>${escapeAdminHtml(participant.lastName || "—")}</strong></div>
+    <div><small>Téléphone</small><a href="${participant.phone ? `tel:${escapeAdminHtml(participant.phone)}` : "#"}">${escapeAdminHtml(participant.phone || "—")}</a></div>
+    <div><small>Email</small><a href="${participant.email ? `mailto:${escapeAdminHtml(participant.email)}` : "#"}">${escapeAdminHtml(participant.email || "—")}</a></div>
+    <div><small>ID de réponse</small><strong>${escapeAdminHtml(submission.id || "—")}</strong></div>
+  `;
+  answersContainer.appendChild(participantElement);
   const titles = new Map((submission.questions || []).map((question) => [question.id, question.title]));
   Object.entries(submission.answers || {}).forEach(([questionId, answer], index) => {
     const answerElement = document.createElement("article");

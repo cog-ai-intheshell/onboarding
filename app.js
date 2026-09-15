@@ -1,4 +1,5 @@
 const isQuestionnairePage = document.body.classList.contains("questionnaire-page");
+const isProfilePage = document.body.classList.contains("profile-page");
 
 function setButtonLoading(button, loading, loadingLabel, normalLabel) {
   button.disabled = loading;
@@ -7,6 +8,8 @@ function setButtonLoading(button, loading, loadingLabel, normalLabel) {
 
 if (isQuestionnairePage) {
   initializeQuestionnairePage();
+} else if (isProfilePage) {
+  initializeProfilePage();
 } else {
   initializeAccessPage();
 }
@@ -54,7 +57,7 @@ function initializeAccessPage() {
 
       accessCode.classList.add("is-valid");
       sessionStorage.setItem("nxt_access_token", data.accessToken);
-      window.setTimeout(() => window.location.assign("/questionnaire.html"), 220);
+      window.setTimeout(() => window.location.assign("/profile.html"), 220);
     } catch (error) {
       accessCode.classList.add("is-invalid");
       accessError.textContent = error.message === "Failed to fetch"
@@ -72,6 +75,90 @@ function initializeAccessPage() {
       }
     })
     .catch(() => {});
+}
+
+function initializeProfilePage() {
+  const accessToken = sessionStorage.getItem("nxt_access_token");
+  if (!accessToken) {
+    window.location.replace("/");
+    return;
+  }
+
+  const form = document.querySelector("#profile-form");
+  const loading = document.querySelector("#profile-loading");
+  const errorElement = document.querySelector("#profile-error");
+  const fields = {
+    firstName: document.querySelector("#first-name"),
+    lastName: document.querySelector("#last-name"),
+    phone: document.querySelector("#phone"),
+    email: document.querySelector("#email"),
+  };
+
+  loadProfile();
+
+  async function loadProfile() {
+    try {
+      const response = await fetch("/api/profile", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (response.status === 401) {
+        sessionStorage.removeItem("nxt_access_token");
+        window.location.replace("/");
+        return;
+      }
+      if (!response.ok) throw new Error(data.message || "Impossible de charger tes informations.");
+      if (data.profile) {
+        Object.entries(fields).forEach(([key, input]) => {
+          input.value = data.profile[key] || "";
+        });
+      }
+      loading.hidden = true;
+      form.hidden = false;
+      fields.firstName.focus();
+    } catch (error) {
+      loading.textContent = error.message === "Failed to fetch" ? "Le serveur ne répond pas." : error.message;
+    }
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    errorElement.textContent = "";
+    Object.values(fields).forEach((input) => input.classList.remove("is-invalid"));
+
+    const profile = Object.fromEntries(
+      Object.entries(fields).map(([key, input]) => [key, input.value.trim()]),
+    );
+    const invalidField = Object.values(fields).find((input) => !input.value.trim() || !input.validity.valid);
+    if (invalidField) {
+      invalidField.classList.add("is-invalid");
+      invalidField.focus();
+      errorElement.textContent = "Complète correctement tous les champs pour continuer.";
+      return;
+    }
+
+    const button = form.querySelector('button[type="submit"]');
+    setButtonLoading(button, true, "Enregistrement…", "Continuer vers le questionnaire");
+    try {
+      const response = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify(profile),
+      });
+      const data = await response.json();
+      if (response.status === 401) {
+        sessionStorage.removeItem("nxt_access_token");
+        window.location.replace("/");
+        return;
+      }
+      if (!response.ok) throw new Error(data.message || "Impossible d’enregistrer tes informations.");
+      window.location.assign("/questionnaire.html");
+    } catch (error) {
+      errorElement.textContent = error.message === "Failed to fetch" ? "Le serveur ne répond pas." : error.message;
+      setButtonLoading(button, false, "Enregistrement…", "Continuer vers le questionnaire");
+    }
+  });
 }
 
 function initializeQuestionnairePage() {
@@ -102,6 +189,27 @@ function initializeQuestionnairePage() {
   restoreDraftAndQuestions();
 
   async function restoreDraftAndQuestions() {
+    try {
+      const profileResponse = await fetch("/api/profile", {
+        headers: { Authorization: `Bearer ${state.accessToken}` },
+        cache: "no-store",
+      });
+      const profileData = await profileResponse.json();
+      if (profileResponse.status === 401) {
+        sessionStorage.removeItem("nxt_access_token");
+        window.location.replace("/");
+        return;
+      }
+      if (!profileResponse.ok) throw new Error(profileData.message || "Impossible de vérifier ton profil.");
+      if (!profileData.profile) {
+        window.location.replace("/profile.html");
+        return;
+      }
+    } catch (error) {
+      elements.loadingState.innerHTML = `<p class="loading-error">${escapeHtml(error.message || "Impossible de vérifier ton profil.")}</p>`;
+      return;
+    }
+
     try {
       const response = await fetch("/api/draft", {
         headers: { Authorization: `Bearer ${state.accessToken}` },

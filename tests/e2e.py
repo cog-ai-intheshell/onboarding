@@ -79,6 +79,24 @@ def main() -> None:
         assert status == 200 and access_payload.get("accessToken"), "Le code temporaire n’est pas accepté."
         access_token = access_payload["accessToken"]
 
+        test_profile = {
+            "firstName": "Camille",
+            "lastName": "Test",
+            "phone": "+33 6 12 34 56 78",
+            "email": "camille.test@example.com",
+        }
+        status, profile_payload = request_json(
+            base_url,
+            "/api/profile",
+            method="POST",
+            payload=test_profile,
+            token=access_token,
+        )
+        assert status == 200 and profile_payload.get("profile") == test_profile, "L’enregistrement du profil a échoué."
+
+        status, profile_payload = request_json(base_url, "/api/profile", token=access_token)
+        assert status == 200 and profile_payload.get("profile") == test_profile, "Le profil restauré est incorrect."
+
         first_question = questions[0]["id"]
         draft_answers = {first_question: "Brouillon de vérification automatique."}
         status, _ = request_json(
@@ -150,8 +168,10 @@ def main() -> None:
         )
         submission_ids = {item.get("id") for item in responses_payload.get("submissions", [])}
         assert status == 200 and submission_id in submission_ids, "La soumission n’apparaît pas dans l’Admin."
+        saved_submission = next(item for item in responses_payload["submissions"] if item.get("id") == submission_id)
+        assert saved_submission.get("participant") == test_profile, "Le profil n’est pas associé à la réponse Admin."
 
-        print(f"Parcours vérifié : {len(questions)} question(s), brouillon, soumission et gestion des codes opérationnels.")
+        print(f"Parcours vérifié : profil, {len(questions)} question(s), brouillon, soumission et Admin opérationnels.")
     finally:
         with psycopg.connect(database_url) as connection:
             if submission_id:

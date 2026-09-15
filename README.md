@@ -5,6 +5,7 @@ Application d’onboarding en français déployable sur Vercel. Le frontend est 
 ## Fonctionnalités
 
 - Accès participant avec un code d’invitation.
+- Collecte du nom, du prénom, du téléphone et de l’email avant le questionnaire.
 - Questionnaire vertical à réponses libres, généré depuis `questions.json`.
 - Sauvegarde et restauration des brouillons par code.
 - Enregistrement définitif des réponses dans PostgreSQL.
@@ -107,6 +108,7 @@ Chaque participant devrait recevoir son propre code, car les brouillons et les s
 Le schéma se trouve dans `db/schema.sql`. Il contient :
 
 - `access_codes` pour les invitations ;
+- `participants` pour les coordonnées associées à chaque code ;
 - `drafts` pour les sauvegardes temporaires ;
 - `submissions` pour les réponses définitives.
 
@@ -152,6 +154,7 @@ Les variables `DATABASE_URL`, `NXT_ADMIN_PASSWORD` et `NXT_SERVER_SECRET` doiven
 | Fichier | Description |
 | --- | --- |
 | `index.html` | Accès participant. |
+| `profile.html` | Coordonnées du participant. |
 | `questionnaire.html` | Questionnaire scrollable. |
 | `experience.html` | Présentation après l’envoi. |
 | `admin.html` | Administration. |

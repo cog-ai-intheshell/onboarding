@@ -24,6 +24,8 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 QUESTIONS_FILE = BASE_DIR / "questions.json"
 ID_PATTERN = re.compile(r"^[a-zA-Z0-9_-]{1,80}$")
 NEW_ACCESS_CODE_PATTERN = re.compile(r"^[A-Z]{1,6}$")
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+PHONE_PATTERN = re.compile(r"^[0-9+().\s-]{6,30}$")
 ACCESS_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ"
 MAX_BODY_SIZE = 2_000_000
 
@@ -150,6 +152,8 @@ class handler(BaseHTTPRequestHandler):
             route = self.requested_route()
             if route == "questions":
                 self.get_questions_route()
+            elif route == "profile":
+                self.get_profile()
             elif route == "draft":
                 self.get_draft()
             elif route == "admin-responses":
@@ -166,6 +170,8 @@ class handler(BaseHTTPRequestHandler):
             route = self.requested_route()
             if route == "validate-code":
                 self.validate_code()
+            elif route == "profile":
+                self.save_profile()
             elif route == "admin-login":
                 self.admin_login()
             elif route == "admin-codes":
@@ -248,9 +254,13 @@ class handler(BaseHTTPRequestHandler):
         with database_connection() as connection:
             rows = connection.execute(
                 """
-                SELECT id, submitted_at, access_code, questions, answers
+                SELECT submissions.id, submissions.submitted_at, submissions.access_code,
+                       submissions.questions, submissions.answers,
+                       participants.first_name, participants.last_name,
+                       participants.phone, participants.email
                 FROM submissions
-                ORDER BY submitted_at DESC
+                LEFT JOIN participants ON participants.access_code = submissions.access_code
+                ORDER BY submissions.submitted_at DESC
                 """
             ).fetchall()
 
@@ -260,8 +270,85 @@ class handler(BaseHTTPRequestHandler):
             "accessCode": row["access_code"],
             "questions": row["questions"],
             "answers": row["answers"],
+            "participant": {
+                "firstName": row["first_name"],
+                "lastName": row["last_name"],
+                "phone": row["phone"],
+                "email": row["email"],
+            } if row["first_name"] is not None else None,
         } for row in rows]
         self.send_json({"submissions": submissions, "count": len(submissions)})
+
+    def get_profile(self):
+        code = self.authenticated_code()
+        if not code:
+            self.send_json({"message": "Ta session a expiré."}, HTTPStatus.UNAUTHORIZED)
+            return
+
+        with database_connection() as connection:
+            row = connection.execute(
+                "SELECT first_name, last_name, phone, email FROM participants WHERE access_code = %s",
+                (code,),
+            ).fetchone()
+        profile = {
+            "firstName": row["first_name"],
+            "lastName": row["last_name"],
+            "phone": row["phone"],
+            "email": row["email"],
+        } if row else None
+        self.send_json({"profile": profile})
+
+    def save_profile(self):
+        code = self.authenticated_code()
+        if not code:
+            self.send_json({"message": "Ta session a expiré."}, HTTPStatus.UNAUTHORIZED)
+            return
+
+        body = self.read_body()
+        if not isinstance(body, dict):
+            self.send_json({"message": "Les informations envoyées sont invalides."}, HTTPStatus.BAD_REQUEST)
+            return
+
+        fields = {
+            "firstName": body.get("firstName", ""),
+            "lastName": body.get("lastName", ""),
+            "phone": body.get("phone", ""),
+            "email": body.get("email", ""),
+        }
+        if not all(isinstance(value, str) for value in fields.values()):
+            self.send_json({"message": "Les informations envoyées sont invalides."}, HTTPStatus.BAD_REQUEST)
+            return
+
+        profile = {key: value.strip() for key, value in fields.items()}
+        if not profile["firstName"] or len(profile["firstName"]) > 100:
+            self.send_json({"message": "Renseigne un prénom valide."}, HTTPStatus.BAD_REQUEST)
+            return
+        if not profile["lastName"] or len(profile["lastName"]) > 100:
+            self.send_json({"message": "Renseigne un nom valide."}, HTTPStatus.BAD_REQUEST)
+            return
+        if not PHONE_PATTERN.fullmatch(profile["phone"]):
+            self.send_json({"message": "Renseigne un numéro de téléphone valide."}, HTTPStatus.BAD_REQUEST)
+            return
+        profile["email"] = profile["email"].lower()
+        if len(profile["email"]) > 254 or not EMAIL_PATTERN.fullmatch(profile["email"]):
+            self.send_json({"message": "Renseigne une adresse email valide."}, HTTPStatus.BAD_REQUEST)
+            return
+
+        with database_connection() as connection:
+            connection.execute(
+                """
+                INSERT INTO participants (access_code, first_name, last_name, phone, email, updated_at)
+                VALUES (%s, %s, %s, %s, %s, NOW())
+                ON CONFLICT (access_code)
+                DO UPDATE SET first_name = EXCLUDED.first_name,
+                              last_name = EXCLUDED.last_name,
+                              phone = EXCLUDED.phone,
+                              email = EXCLUDED.email,
+                              updated_at = NOW()
+                """,
+                (code, profile["firstName"], profile["lastName"], profile["phone"], profile["email"]),
+            )
+        self.send_json({"saved": True, "profile": profile})
 
     def get_admin_codes(self):
         if not self.authenticated_admin():
@@ -426,6 +513,13 @@ class handler(BaseHTTPRequestHandler):
         question_snapshot = [{"id": question["id"], "title": question["title"]} for question in questions]
 
         with database_connection() as connection:
+            participant = connection.execute(
+                "SELECT 1 FROM participants WHERE access_code = %s",
+                (code,),
+            ).fetchone()
+            if not participant:
+                self.send_json({"message": "Complète d’abord tes coordonnées."}, HTTPStatus.BAD_REQUEST)
+                return
             connection.execute(
                 """
                 INSERT INTO submissions (id, access_code, questions, answers, submitted_at)

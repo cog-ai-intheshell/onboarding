@@ -9,6 +9,7 @@
   "rewrites": [
     { "source": "/api/questions", "destination": "/api/index?route=questions" },
     { "source": "/api/validate-code", "destination": "/api/index?route=validate-code" },
+    { "source": "/api/profile", "destination": "/api/index?route=profile" },
     { "source": "/api/draft", "destination": "/api/index?route=draft" },
     { "source": "/api/submissions", "destination": "/api/index?route=submissions" },
     { "source": "/api/admin/login", "destination": "/api/index?route=admin-login" },

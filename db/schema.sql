@@ -4,6 +4,15 @@ CREATE TABLE IF NOT EXISTS access_codes (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS participants (
+  access_code TEXT PRIMARY KEY REFERENCES access_codes(code) ON DELETE CASCADE,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  email TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS drafts (
   access_code TEXT PRIMARY KEY REFERENCES access_codes(code) ON DELETE CASCADE,
   answers JSONB NOT NULL DEFAULT '{}'::jsonb,
