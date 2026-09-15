@@ -1,0 +1,13 @@
+.git/
+.vercel/
+.venv/
+.env*
+__pycache__/
+*.py[cod]
+access_codes.json
+drafts.json
+responses.json
+admin_config.json
+server.py
+db/
+tests/

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "questions.json",
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    { "source": "/api/questions", "destination": "/api/index?route=questions" },
+    { "source": "/api/validate-code", "destination": "/api/index?route=validate-code" },
+    { "source": "/api/draft", "destination": "/api/index?route=draft" },
+    { "source": "/api/submissions", "destination": "/api/index?route=submissions" },
+    { "source": "/api/admin/login", "destination": "/api/index?route=admin-login" },
+    { "source": "/api/admin/responses", "destination": "/api/index?route=admin-responses" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+      ]
+    }
+  ]
+}

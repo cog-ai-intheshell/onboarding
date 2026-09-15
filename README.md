@@ -1,235 +1,175 @@
 # NXT — Onboarding Bootcamp
 
-Application d’onboarding en français, réalisée en HTML, CSS, JavaScript, JSON et Python, sans dépendance externe.
-
-Un participant saisit son code d’invitation, complète un questionnaire à réponses libres, puis découvre la présentation du bootcamp. Ses réponses peuvent être sauvegardées et reprises plus tard. Un espace administrateur permet de consulter les candidatures reçues.
+Application d’onboarding en français déployable sur Vercel. Le frontend est en HTML, CSS et JavaScript, les questions restent dans un fichier JSON, l’API est écrite en Python et les données persistantes sont stockées dans PostgreSQL avec Neon.
 
 ## Fonctionnalités
 
-- Page d’accès séparée avec validation d’un code d’invitation.
-- Questionnaire vertical et scrollable, généré depuis un fichier JSON.
-- Questions, explications et contraintes modifiables sans toucher au HTML.
-- Sauvegarde d’un brouillon associé au code du participant.
-- Restauration automatique du brouillon lors de la prochaine connexion.
-- Enregistrement définitif des réponses avant la redirection vers la présentation du bootcamp.
-- Espace administrateur protégé par mot de passe.
-- Recherche et consultation des réponses par identifiant ou code d’invitation.
-- Couleurs centralisées sous forme de tokens CSS.
+- Accès participant avec un code d’invitation.
+- Questionnaire vertical à réponses libres, généré depuis `questions.json`.
+- Sauvegarde et restauration des brouillons par code.
+- Enregistrement définitif des réponses dans PostgreSQL.
+- Espace administrateur protégé par un mot de passe fort.
+- Consultation et recherche des soumissions par identifiant ou code.
+- Déploiements automatiques Vercel depuis la branche `main`.
+
+## Architecture
+
+| Élément | Technologie |
+| --- | --- |
+| Pages | HTML |
+| Styles | CSS avec tokens `--color-*` |
+| Interactions | JavaScript natif |
+| Questions | `questions.json` |
+| API | Fonction Python Vercel |
+| Données | PostgreSQL avec Neon |
+| Hébergement | Vercel |
 
 ## Prérequis
 
-- Python 3.10 ou une version plus récente.
-- Un navigateur web récent.
+- Python 3.12.
+- Vercel CLI.
+- Un projet Vercel lié à une base Neon.
 
-Aucune installation de paquet n’est nécessaire.
+## Installation locale
 
-## Démarrage
-
-Lors de la première installation, crée ton fichier local de codes d’accès à partir de l’exemple :
-
-```bash
-cp access_codes.example.json access_codes.json
-```
-
-Modifie ensuite les codes dans `access_codes.json`, puis démarre le serveur depuis le dossier du projet :
+Le projet est déjà lié à Vercel. Pour une nouvelle installation :
 
 ```bash
-python3 server.py
+vercel link
+vercel env pull .env.local --yes
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
 ```
 
-Ouvre ensuite :
+Le fichier `.env.local` doit contenir ces trois variables :
 
-- Site participant : [http://127.0.0.1:8000](http://127.0.0.1:8000)
-- Administration : [http://127.0.0.1:8000/admin.html](http://127.0.0.1:8000/admin.html)
+```text
+DATABASE_URL
+NXT_ADMIN_PASSWORD
+NXT_SERVER_SECRET
+```
 
-Pour utiliser un autre port :
+Leurs valeurs ne doivent jamais être ajoutées à Git.
+
+## Démarrage local
 
 ```bash
-NXT_PORT=8765 python3 server.py
+vercel dev
 ```
 
-Il faut passer par le serveur Python. Ouvrir directement les fichiers HTML empêche le chargement des questions, la validation des codes et la sauvegarde des réponses.
+Le CLI indique l’adresse locale à ouvrir. L’accueil et l’administration sont ensuite disponibles aux adresses suivantes :
 
-## Parcours participant
-
-1. Le participant saisit un code valide sur la page d’accueil.
-2. Il est redirigé vers `questionnaire.html`.
-3. Les questions sont affichées les unes à la suite des autres sur une seule page scrollable.
-4. Il peut sauvegarder ses réponses et revenir plus tard avec le même code.
-5. Lors de l’envoi définitif, les réponses sont enregistrées et le brouillon est supprimé.
-6. Le participant est redirigé vers `experience.html`.
-
-## Créer des codes d’accès
-
-Les codes autorisés se trouvent dans le fichier local `access_codes.json`. Ajoute simplement une valeur au tableau `codes` :
-
-```json
-{
-  "codes": [
-    "NXT-2026",
-    "BOOTCAMP-VIP",
-    "NOUVEL-INVITE"
-  ]
-}
-```
-
-Le serveur relit ce fichier à chaque tentative. Il n’est donc pas nécessaire de le redémarrer après l’ajout d’un code.
-
-Le fichier contenant les vrais codes est exclu de Git afin de ne pas publier les accès des participants. Le dépôt contient uniquement `access_codes.example.json`, que tu peux copier lors d’une nouvelle installation.
-
-Chaque participant devrait recevoir un code unique : les brouillons et les réponses sont associés au code utilisé. La saisie n’est pas sensible aux majuscules et les espaces placés avant ou après le code sont ignorés.
-
-### Attention à la syntaxe JSON
-
-Chaque code doit être suivi d’une virgule, sauf le dernier. Les commentaires et les virgules après la dernière valeur ne sont pas autorisés.
-
-Pour vérifier le fichier avant de tester un nouveau code :
-
-```bash
-python3 -m json.tool access_codes.json
-```
-
-Si cette commande affiche une erreur, le site refusera les codes jusqu’à la correction du fichier.
+- `/`
+- `/admin.html`
 
 ## Modifier les questions
 
-Toutes les questions sont définies dans `questions.json`. Il est possible de les ajouter, supprimer, réordonner ou modifier directement dans ce fichier.
-
-Exemple :
+Les questions sont définies dans `questions.json`. Elles peuvent être ajoutées, supprimées, réordonnées ou modifiées directement.
 
 ```json
 {
   "id": "presentation",
   "title": "Présente-toi",
-  "helper": "Parle-nous brièvement de ton parcours et de ce qui t’anime aujourd’hui.",
-  "placeholder": "Ton parcours, tes expériences, tes motivations…",
+  "helper": "Parle-nous brièvement de ton parcours.",
+  "placeholder": "Je suis…",
   "required": true
 }
 ```
 
-Propriétés disponibles :
+Le champ `id` doit être unique et stable. Les réponses ne possèdent aucune limite minimale ou maximale ; une question obligatoire doit simplement contenir un texte non vide.
 
-| Propriété | Rôle |
-| --- | --- |
-| `id` | Identifiant unique et stable de la question. |
-| `title` | Question affichée au participant. |
-| `helper` | Courte explication affichée sous la question. |
-| `placeholder` | Exemple discret affiché dans la zone de réponse. |
-| `required` | Indique si la réponse est obligatoire. |
+## Créer un code d’accès
 
-Le champ `id` doit rester unique. Évite de le modifier après avoir reçu des réponses, car il sert à relier les réponses enregistrées à leur question.
+Depuis le dossier du projet :
 
-Les zones de réponse n’imposent aucune longueur minimale ou maximale. Une question requise doit simplement contenir une réponse non vide.
+```bash
+.venv/bin/python db/add_code.py "NOUVEAU-CODE"
+```
 
-## Sauvegarde des données
+Le code est normalisé en majuscules, enregistré dans Neon et utilisable immédiatement, sans redéploiement.
 
-Les données sont conservées localement dans deux fichiers, créés automatiquement si nécessaire :
+Il est également possible d’exécuter cette requête dans l’éditeur SQL de Neon :
 
-- `drafts.json` contient les brouillons, associés au code d’invitation.
-- `responses.json` contient les réponses envoyées définitivement, avec leur identifiant, leur code et leur date.
+```sql
+INSERT INTO access_codes (code, active)
+VALUES (UPPER('NOUVEAU-CODE'), TRUE)
+ON CONFLICT (code) DO UPDATE SET active = TRUE;
+```
 
-La sauvegarde d’un nouveau brouillon avec le même code met à jour le brouillon existant. L’envoi définitif crée une soumission, puis supprime ce brouillon.
+Chaque participant devrait recevoir son propre code, car les brouillons et les soumissions y sont associés.
 
-Pour conserver les données, sauvegarde régulièrement ces deux fichiers. Évite de les modifier manuellement pendant que le serveur est en train d’enregistrer une réponse.
+## Base de données
 
-Ces fichiers sont exclus de Git pour empêcher la publication des réponses des participants.
+Le schéma se trouve dans `db/schema.sql`. Il contient :
+
+- `access_codes` pour les invitations ;
+- `drafts` pour les sauvegardes temporaires ;
+- `submissions` pour les réponses définitives.
+
+Pour créer ou mettre à jour les tables et importer les anciens fichiers JSON locaux :
+
+```bash
+.venv/bin/python db/migrate.py
+```
+
+La migration est réexécutable : les codes sont mis à jour et les soumissions déjà présentes ne sont pas dupliquées.
 
 ## Administration
 
-L’espace administrateur est accessible à l’adresse :
+L’administration est disponible sur `/admin.html`. Le mot de passe est la valeur de `NXT_ADMIN_PASSWORD`.
 
-[http://127.0.0.1:8000/admin.html](http://127.0.0.1:8000/admin.html)
-
-Le mot de passe initial est :
-
-```text
-NXT-ADMIN-2026
-```
-
-Pour définir ton propre mot de passe au démarrage :
+Sur la machine ayant servi à configurer le projet, cette valeur se trouve uniquement dans `.env.local`, qui est ignoré par Git. Pour la modifier :
 
 ```bash
-NXT_ADMIN_PASSWORD="un-mot-de-passe-long-et-unique" python3 server.py
+vercel env update NXT_ADMIN_PASSWORD production
+vercel env update NXT_ADMIN_PASSWORD preview
+vercel env update NXT_ADMIN_PASSWORD development
+vercel env pull .env.local --yes
 ```
 
-Ce réglage remplace le mot de passe par défaut sans modifier les fichiers du projet. La session administrateur expire automatiquement après deux heures.
+La session administrateur expire après deux heures. Les sessions participant expirent après quatre heures.
 
-Change impérativement le mot de passe initial avant toute utilisation avec de vraies données. L’interface d’administration est prévue pour la consultation : elle ne modifie pas les réponses.
+## Déploiement Vercel
 
-## Personnaliser les couleurs
+### Déploiement automatique
 
-Toutes les couleurs principales sont regroupées en haut de `styles.css` sous forme de variables `--color-*` :
+Une fois le dépôt GitHub connecté au projet Vercel, chaque push sur `main` crée un déploiement de production.
 
-```css
-:root {
-  --color-background: #08090c;
-  --color-text: #f5f3ee;
-  --color-accent: #e50914;
-}
-```
-
-Modifier ces tokens permet de faire évoluer rapidement l’identité visuelle sans rechercher chaque couleur dans la feuille de styles.
-
-## Configuration du serveur
-
-Les variables d’environnement disponibles sont :
-
-| Variable | Valeur par défaut | Usage |
-| --- | --- | --- |
-| `NXT_HOST` | `127.0.0.1` | Adresse d’écoute du serveur. |
-| `NXT_PORT` | `8000` | Port HTTP utilisé. |
-| `NXT_ADMIN_PASSWORD` | Mot de passe configuré localement | Remplace le mot de passe administrateur. |
-| `NXT_SERVER_SECRET` | Secret généré au démarrage | Signe les sessions administrateur. |
-
-Pour conserver les sessions administrateur après un redémarrage, définis un secret long et aléatoire :
+### Déploiement manuel
 
 ```bash
-NXT_SERVER_SECRET="un-secret-long-et-aleatoire" python3 server.py
+vercel --prod
 ```
 
-## Structure du projet
+Les variables `DATABASE_URL`, `NXT_ADMIN_PASSWORD` et `NXT_SERVER_SECRET` doivent être configurées pour Production, Preview et Development avant le déploiement.
+
+## Fichiers principaux
 
 | Fichier | Description |
 | --- | --- |
-| `index.html` | Page d’accès participant. |
+| `index.html` | Accès participant. |
 | `questionnaire.html` | Questionnaire scrollable. |
-| `experience.html` | Présentation du bootcamp après l’envoi. |
-| `admin.html` | Connexion et consultation administrateur. |
-| `styles.css` | Styles du site et tokens de couleur. |
-| `app.js` | Accès participant, questionnaire et sauvegarde. |
-| `admin.js` | Connexion et affichage des réponses côté administrateur. |
-| `questions.json` | Questions et explications du questionnaire. |
-| `access_codes.example.json` | Modèle public de configuration des codes. |
-| `access_codes.json` | Codes d’invitation locaux, non publiés dans Git. |
-| `drafts.json` | Brouillons locaux des participants, non publiés dans Git. |
-| `responses.json` | Soumissions définitives locales, non publiées dans Git. |
-| `admin_config.json` | Configuration sécurisée du mot de passe administrateur. |
-| `server.py` | Serveur web, validation et persistance des données. |
+| `experience.html` | Présentation après l’envoi. |
+| `admin.html` | Administration. |
+| `styles.css` | Styles et tokens de couleur. |
+| `app.js` | Parcours participant. |
+| `admin.js` | Consultation administrateur. |
+| `questions.json` | Questions et explications. |
+| `api/index.py` | API Python serverless. |
+| `db/schema.sql` | Schéma PostgreSQL. |
+| `db/migrate.py` | Migration des données locales. |
+| `db/add_code.py` | Ajout d’un code d’accès. |
+| `vercel.json` | Routes, fonction et en-têtes Vercel. |
+| `requirements.txt` | Dépendances Python. |
 
-## Dépannage
+## Données privées
 
-### Un code valide est refusé
+Les fichiers et dossiers suivants sont exclus de Git et/ou du déploiement :
 
-Vérifie d’abord la syntaxe de `access_codes.json` :
+- `.env.local` ;
+- `.vercel/` ;
+- `access_codes.json` ;
+- `drafts.json` ;
+- `responses.json`.
 
-```bash
-python3 -m json.tool access_codes.json
-```
-
-Vérifie ensuite que le code se trouve bien entre guillemets et que les valeurs sont séparées par des virgules.
-
-### Le site ne charge pas les questions
-
-Assure-toi que `server.py` est en cours d’exécution et que le site est ouvert avec une adresse commençant par `http://127.0.0.1:`.
-
-### Le port est déjà utilisé
-
-Démarre le serveur sur un autre port :
-
-```bash
-NXT_PORT=8765 python3 server.py
-```
-
-## Mise en production
-
-Le serveur Python intégré convient à une utilisation locale, une démonstration ou un prototype interne. Pour exposer le site publiquement, prévois au minimum HTTPS, un hébergement persistant, des sauvegardes, un mot de passe administrateur fort et une solution de stockage adaptée à plusieurs utilisateurs simultanés.
+Les codes et réponses de production résident exclusivement dans Neon.

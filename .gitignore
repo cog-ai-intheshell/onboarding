@@ -6,8 +6,11 @@ responses.json
 # Variables d’environnement
 .env
 .env.*
+!.env.example
 
 # Fichiers générés par Python et macOS
 __pycache__/
 *.py[cod]
 .DS_Store
+.vercel
+.venv/
