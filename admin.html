@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=14" />
+    <link rel="stylesheet" href="styles.css?v=15" />
   </head>
   <body class="admin-page">
     <header class="site-header admin-header">
@@ -46,6 +46,34 @@
           <button class="admin-logout" id="admin-logout" type="button">Se déconnecter</button>
         </div>
 
+        <section class="admin-codes" aria-labelledby="admin-codes-title">
+          <div class="admin-section-heading">
+            <div>
+              <p class="admin-eyebrow">Accès participants</p>
+              <h2 id="admin-codes-title">Codes d’accès</h2>
+            </div>
+            <p><strong id="code-count">0</strong> code<span id="code-plural">s</span></p>
+          </div>
+
+          <form class="admin-code-form" id="admin-code-form" novalidate>
+            <label for="new-access-code">
+              <span>Nouveau code</span>
+              <input id="new-access-code" name="code" type="text" maxlength="6" pattern="[A-Za-z]{1,6}" placeholder="ALPHA" autocomplete="off" spellcheck="false" />
+            </label>
+            <button class="button button--primary" type="submit"><span>Créer</span></button>
+            <button class="button button--ghost" id="generate-code" type="button"><span>Générer 6 lettres</span></button>
+          </form>
+          <p class="admin-code-feedback" id="code-feedback" role="status" aria-live="polite">Entre jusqu’à 6 lettres, ou génère un code aléatoire.</p>
+          <div class="admin-code-list" id="admin-code-list"></div>
+        </section>
+
+        <div class="admin-section-heading admin-responses-heading">
+          <div>
+            <p class="admin-eyebrow">Questionnaires</p>
+            <h2>Réponses</h2>
+          </div>
+        </div>
+
         <div class="admin-toolbar">
           <p><strong id="submission-count">0</strong> soumission<span id="submission-plural">s</span></p>
           <label class="admin-search">
@@ -63,6 +91,6 @@
       </section>
     </main>
 
-    <script src="admin.js?v=1" defer></script>
+    <script src="admin.js?v=2" defer></script>
   </body>
 </html>

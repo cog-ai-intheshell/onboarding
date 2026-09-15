@@ -541,6 +541,31 @@ blockquote::first-letter { color: var(--color-accent); }
 .admin-dashboard__heading h1 { margin: 0; font: 700 clamp(48px, 6vw, 76px)/1 var(--font-display); letter-spacing: -.065em; }
 .admin-logout { padding: 10px 0; border: 0; border-bottom: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-muted); cursor: pointer; font-size: 12px; }
 .admin-logout:hover { color: var(--color-text); border-color: var(--color-text); }
+.admin-codes { margin-bottom: 90px; }
+.admin-section-heading { margin-bottom: 25px; display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; }
+.admin-section-heading .admin-eyebrow { margin-bottom: 10px; }
+.admin-section-heading h2 { margin: 0; font: 700 clamp(28px, 3.4vw, 42px)/1.1 var(--font-display); letter-spacing: -.045em; }
+.admin-section-heading > p { margin: 0 0 5px; color: var(--color-text-muted); font-size: 12px; }
+.admin-section-heading > p strong { color: var(--color-text); }
+.admin-code-form { display: grid; grid-template-columns: minmax(180px, 1fr) auto auto; align-items: end; gap: 10px; }
+.admin-code-form label { display: grid; gap: 9px; color: var(--color-text-muted); font-size: 11px; }
+.admin-code-form input { width: 100%; height: 54px; padding: 0 17px; border: 1px solid var(--color-input-border); border-radius: var(--radius-small); outline: 0; background: var(--color-input-background); color: var(--color-text); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; transition: border var(--ease), box-shadow var(--ease); }
+.admin-code-form input:focus { border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-soft); }
+.admin-code-feedback { min-height: 20px; margin: 11px 0 18px; color: var(--color-text-dim); font-size: 11px; }
+.admin-code-feedback.is-error { color: var(--color-error); }
+.admin-code-feedback.is-success { color: var(--color-success); }
+.admin-code-list { border-top: 1px solid var(--color-border); }
+.admin-code-row { min-height: 70px; padding: 14px 4px; display: grid; grid-template-columns: minmax(180px, .8fr) 1fr auto; align-items: center; gap: 24px; border-bottom: 1px solid var(--color-border); }
+.admin-code-row__identity { min-width: 0; display: flex; align-items: center; gap: 12px; }
+.admin-code-row__identity strong { overflow: hidden; font: 700 14px/1 var(--font-display); letter-spacing: .1em; text-overflow: ellipsis; }
+.admin-code-row__identity span { padding: 5px 8px; border-radius: 999px; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+.admin-code-row__identity .is-active { background: rgba(91, 224, 148, .1); color: var(--color-success); }
+.admin-code-row__identity .is-inactive { background: var(--color-surface); color: var(--color-text-dim); }
+.admin-code-row > small { color: var(--color-text-dim); font-size: 11px; }
+.admin-code-toggle { padding: 8px 0; border: 0; border-bottom: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-muted); cursor: pointer; font-size: 11px; }
+.admin-code-toggle:hover { border-color: var(--color-text); color: var(--color-text); }
+.admin-code-toggle:disabled { cursor: wait; opacity: .5; }
+.admin-responses-heading { margin-bottom: 24px; }
 .admin-toolbar { margin-bottom: 28px; display: flex; align-items: center; justify-content: space-between; gap: 30px; }
 .admin-toolbar p { margin: 0; color: var(--color-text-muted); font-size: 13px; }
 .admin-toolbar p strong { color: var(--color-text); }
@@ -572,6 +597,13 @@ blockquote::first-letter { color: var(--color-accent); }
   .admin-header__label { display: none; }
   .admin-dashboard { width: calc(100% - 40px); padding-top: 120px; }
   .admin-dashboard__heading { margin-bottom: 50px; align-items: flex-start; flex-direction: column; }
+  .admin-codes { margin-bottom: 72px; }
+  .admin-code-form { grid-template-columns: 1fr 1fr; }
+  .admin-code-form label { grid-column: 1 / -1; }
+  .admin-code-form .button { padding-inline: 14px; gap: 12px; }
+  .admin-code-row { grid-template-columns: 1fr auto; gap: 8px 18px; }
+  .admin-code-row > small { grid-column: 1; }
+  .admin-code-toggle { grid-column: 2; grid-row: 1 / span 2; }
   .admin-toolbar { align-items: stretch; flex-direction: column; }
   .admin-search input { width: 100%; }
   .submission summary { grid-template-columns: 1fr 20px; gap: 12px; }

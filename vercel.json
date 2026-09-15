@@ -12,7 +12,8 @@
     { "source": "/api/draft", "destination": "/api/index?route=draft" },
     { "source": "/api/submissions", "destination": "/api/index?route=submissions" },
     { "source": "/api/admin/login", "destination": "/api/index?route=admin-login" },
-    { "source": "/api/admin/responses", "destination": "/api/index?route=admin-responses" }
+    { "source": "/api/admin/responses", "destination": "/api/index?route=admin-responses" },
+    { "source": "/api/admin/codes", "destination": "/api/index?route=admin-codes" }
   ],
   "headers": [
     {

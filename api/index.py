@@ -23,6 +23,8 @@ from psycopg.types.json import Jsonb
 BASE_DIR = Path(__file__).resolve().parents[1]
 QUESTIONS_FILE = BASE_DIR / "questions.json"
 ID_PATTERN = re.compile(r"^[a-zA-Z0-9_-]{1,80}$")
+NEW_ACCESS_CODE_PATTERN = re.compile(r"^[A-Z]{1,6}$")
+ACCESS_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ"
 MAX_BODY_SIZE = 2_000_000
 
 
@@ -152,6 +154,8 @@ class handler(BaseHTTPRequestHandler):
                 self.get_draft()
             elif route == "admin-responses":
                 self.get_admin_responses()
+            elif route == "admin-codes":
+                self.get_admin_codes()
             else:
                 self.send_json({"message": "Route introuvable."}, HTTPStatus.NOT_FOUND)
         except Exception as error:  # La réponse reste neutre, le détail part dans les logs Vercel.
@@ -164,6 +168,8 @@ class handler(BaseHTTPRequestHandler):
                 self.validate_code()
             elif route == "admin-login":
                 self.admin_login()
+            elif route == "admin-codes":
+                self.create_admin_code()
             elif route == "draft":
                 self.save_draft()
             elif route == "submissions":
@@ -171,6 +177,15 @@ class handler(BaseHTTPRequestHandler):
             else:
                 self.send_json({"message": "Route introuvable."}, HTTPStatus.NOT_FOUND)
         except Exception as error:  # La réponse reste neutre, le détail part dans les logs Vercel.
+            self.handle_server_error(error)
+
+    def do_PATCH(self):
+        try:
+            if self.requested_route() == "admin-codes":
+                self.update_admin_code()
+            else:
+                self.send_json({"message": "Route introuvable."}, HTTPStatus.NOT_FOUND)
+        except Exception as error:
             self.handle_server_error(error)
 
     def requested_route(self) -> str:
@@ -247,6 +262,102 @@ class handler(BaseHTTPRequestHandler):
             "answers": row["answers"],
         } for row in rows]
         self.send_json({"submissions": submissions, "count": len(submissions)})
+
+    def get_admin_codes(self):
+        if not self.authenticated_admin():
+            self.send_json({"message": "Session administrateur invalide ou expirée."}, HTTPStatus.UNAUTHORIZED)
+            return
+
+        with database_connection() as connection:
+            rows = connection.execute(
+                """
+                SELECT access_codes.code, access_codes.active, access_codes.created_at,
+                       COUNT(submissions.id)::int AS submission_count
+                FROM access_codes
+                LEFT JOIN submissions ON submissions.access_code = access_codes.code
+                GROUP BY access_codes.code, access_codes.active, access_codes.created_at
+                ORDER BY access_codes.created_at DESC, access_codes.code ASC
+                """
+            ).fetchall()
+
+        codes = [{
+            "code": row["code"],
+            "active": row["active"],
+            "createdAt": row["created_at"].isoformat(),
+            "submissionCount": row["submission_count"],
+        } for row in rows]
+        self.send_json({"codes": codes, "count": len(codes)})
+
+    def create_admin_code(self):
+        if not self.authenticated_admin():
+            self.send_json({"message": "Session administrateur invalide ou expirée."}, HTTPStatus.UNAUTHORIZED)
+            return
+
+        body = self.read_body()
+        if not isinstance(body, dict):
+            self.send_json({"message": "La demande est invalide."}, HTTPStatus.BAD_REQUEST)
+            return
+
+        generate = body.get("generate") is True
+        requested_code = body.get("code", "")
+        if not generate:
+            code = requested_code.strip().upper() if isinstance(requested_code, str) else ""
+            if not NEW_ACCESS_CODE_PATTERN.fullmatch(code):
+                self.send_json(
+                    {"message": "Le code doit contenir entre 1 et 6 lettres, sans chiffre ni symbole."},
+                    HTTPStatus.BAD_REQUEST,
+                )
+                return
+            if not self.insert_access_code(code):
+                self.send_json({"message": "Ce code existe déjà."}, HTTPStatus.CONFLICT)
+                return
+        else:
+            code = ""
+            for _ in range(20):
+                candidate = "".join(secrets.choice(ACCESS_CODE_ALPHABET) for _ in range(6))
+                if self.insert_access_code(candidate):
+                    code = candidate
+                    break
+            if not code:
+                self.send_json({"message": "Impossible de générer un code pour le moment."}, HTTPStatus.CONFLICT)
+                return
+
+        self.send_json({"created": True, "code": code, "active": True}, HTTPStatus.CREATED)
+
+    def insert_access_code(self, code: str) -> bool:
+        with database_connection() as connection:
+            row = connection.execute(
+                """
+                INSERT INTO access_codes (code, active)
+                VALUES (%s, TRUE)
+                ON CONFLICT (code) DO NOTHING
+                RETURNING code
+                """,
+                (code,),
+            ).fetchone()
+        return row is not None
+
+    def update_admin_code(self):
+        if not self.authenticated_admin():
+            self.send_json({"message": "Session administrateur invalide ou expirée."}, HTTPStatus.UNAUTHORIZED)
+            return
+
+        body = self.read_body()
+        code = body.get("code", "").strip().upper() if isinstance(body, dict) and isinstance(body.get("code"), str) else ""
+        active = body.get("active") if isinstance(body, dict) else None
+        if not code or len(code) > 80 or not isinstance(active, bool):
+            self.send_json({"message": "La modification demandée est invalide."}, HTTPStatus.BAD_REQUEST)
+            return
+
+        with database_connection() as connection:
+            row = connection.execute(
+                "UPDATE access_codes SET active = %s WHERE code = %s RETURNING code, active",
+                (active, code),
+            ).fetchone()
+        if not row:
+            self.send_json({"message": "Ce code est introuvable."}, HTTPStatus.NOT_FOUND)
+            return
+        self.send_json({"updated": True, "code": row["code"], "active": row["active"]})
 
     def get_draft(self):
         code = self.authenticated_code()

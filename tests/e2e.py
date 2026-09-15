@@ -56,6 +56,7 @@ def main() -> None:
         raise SystemExit("DATABASE_URL et NXT_ADMIN_PASSWORD sont requis.")
 
     temporary_code = f"E2E-{secrets.token_hex(8).upper()}"
+    generated_code = ""
     submission_id = ""
 
     try:
@@ -113,20 +114,50 @@ def main() -> None:
             payload={"password": admin_password},
         )
         assert status == 200 and admin_payload.get("adminToken"), "La connexion Admin a échoué."
+        admin_token = admin_payload["adminToken"]
+
+        status, codes_payload = request_json(
+            base_url,
+            "/api/admin/codes",
+            token=admin_token,
+        )
+        listed_codes = {item.get("code") for item in codes_payload.get("codes", [])}
+        assert status == 200 and temporary_code in listed_codes, "Le code temporaire n’apparaît pas dans l’Admin."
+
+        status, generated_payload = request_json(
+            base_url,
+            "/api/admin/codes",
+            method="POST",
+            payload={"generate": True},
+            token=admin_token,
+        )
+        generated_code = generated_payload.get("code", "")
+        assert status == 201 and len(generated_code) == 6 and generated_code.isalpha(), "La génération de code a échoué."
+
+        status, updated_payload = request_json(
+            base_url,
+            "/api/admin/codes",
+            method="PATCH",
+            payload={"code": generated_code, "active": False},
+            token=admin_token,
+        )
+        assert status == 200 and updated_payload.get("active") is False, "La désactivation du code a échoué."
 
         status, responses_payload = request_json(
             base_url,
             "/api/admin/responses",
-            token=admin_payload["adminToken"],
+            token=admin_token,
         )
         submission_ids = {item.get("id") for item in responses_payload.get("submissions", [])}
         assert status == 200 and submission_id in submission_ids, "La soumission n’apparaît pas dans l’Admin."
 
-        print(f"Parcours vérifié : {len(questions)} question(s), brouillon, soumission et Admin opérationnels.")
+        print(f"Parcours vérifié : {len(questions)} question(s), brouillon, soumission et gestion des codes opérationnels.")
     finally:
         with psycopg.connect(database_url) as connection:
             if submission_id:
                 connection.execute("DELETE FROM submissions WHERE id = %s", (submission_id,))
+            if generated_code:
+                connection.execute("DELETE FROM access_codes WHERE code = %s", (generated_code,))
             connection.execute("DELETE FROM drafts WHERE access_code = %s", (temporary_code,))
             connection.execute("DELETE FROM access_codes WHERE code = %s", (temporary_code,))
 

@@ -80,6 +80,10 @@ Le champ `id` doit être unique et stable. Les réponses ne possèdent aucune li
 
 ## Créer un code d’accès
 
+Le moyen le plus simple est d’ouvrir `/admin.html`, puis d’utiliser la section **Codes d’accès**. Elle permet de créer un code personnalisé de 1 à 6 lettres, d’en générer un aléatoirement et d’activer ou désactiver les codes existants. Les changements sont immédiats et ne demandent aucun redéploiement.
+
+Depuis le terminal, il reste également possible d’ajouter un code directement dans Neon :
+
 Depuis le dossier du projet :
 
 ```bash
@@ -116,7 +120,7 @@ La migration est réexécutable : les codes sont mis à jour et les soumissions 
 
 ## Administration
 
-L’administration est disponible sur `/admin.html`. Le mot de passe est la valeur de `NXT_ADMIN_PASSWORD`.
+L’administration est disponible sur `/admin.html`. Elle regroupe la gestion des codes d’accès et la consultation des réponses. Le mot de passe est la valeur de `NXT_ADMIN_PASSWORD`.
 
 Sur la machine ayant servi à configurer le projet, cette valeur se trouve uniquement dans `.env.local`, qui est ignoré par Git. Pour la modifier :
 
