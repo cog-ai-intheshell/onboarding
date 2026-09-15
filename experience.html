@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=15" />
+    <link rel="stylesheet" href="styles.css?v=16" />
   </head>
   <body class="text-page">
     <header class="site-header text-page__header">
@@ -29,14 +29,33 @@
         <p>C’est pourquoi nous avons commencé, secrètement, il y a quelques années à créer ce bootcamp. Nous l’avons réservé uniquement aux profils que nous jugeons à haut potentiel.</p>
 
         <aside class="pilot-offer" aria-labelledby="pilot-offer-title">
-          <p class="pilot-offer__eyebrow">Édition pilote · Octobre</p>
+          <div class="pilot-offer__header">
+            <p class="pilot-offer__eyebrow"><span aria-hidden="true"></span>Édition pilote · Octobre 2026</p>
+            <span class="pilot-offer__index" aria-hidden="true">Pilot / 01</span>
+          </div>
+
           <h2 id="pilot-offer-title">Nous testons ce bootcamp avec un premier groupe restreint.</h2>
-          <p>Quatre places seulement sont réservées pour le mois d’octobre. Cette première édition nous permettra d’éprouver le format au contact de participants sélectionnés et de l’affiner avant son lancement officiel.</p>
-          <p>C’est pour cette raison que le tarif de cette édition pilote est fixé à <strong>5&nbsp;000&nbsp;€ HT</strong>.</p>
+
+          <div class="pilot-offer__copy">
+            <p>Quatre places seulement sont réservées pour le mois d’octobre. Cette première édition nous permettra d’éprouver le format au contact de participants sélectionnés et de l’affiner avant son lancement officiel.</p>
+            <p>C’est pour cette raison que le tarif de cette édition pilote est fixé à <strong>5&nbsp;000&nbsp;€ HT</strong>.</p>
+          </div>
+
+          <div class="pilot-offer__meta" aria-label="Informations sur l’édition pilote">
+            <div>
+              <span>Capacité</span>
+              <strong>04 <small>places</small></strong>
+            </div>
+            <div>
+              <span>Tarif pilote</span>
+              <strong>5&nbsp;000&nbsp;€ <small>HT</small></strong>
+            </div>
+          </div>
 
           <section class="pilot-countdown" data-deadline="2026-09-26T23:59:59+02:00" aria-labelledby="pilot-countdown-title">
             <p class="pilot-countdown__title" id="pilot-countdown-title">
-              Clôture de l’offre le <time datetime="2026-09-26T23:59:59+02:00">26 septembre à 23&nbsp;h&nbsp;59</time>, heure de Paris.
+              <span>Clôture de l’offre</span>
+              <time datetime="2026-09-26T23:59:59+02:00">26 septembre · 23&nbsp;h&nbsp;59 · Paris</time>
             </p>
             <div class="pilot-countdown__grid" role="timer" aria-label="Temps restant avant la clôture de l’offre">
               <div><strong data-countdown-days>00</strong><span>Jours</span></div>
@@ -46,17 +65,6 @@
             </div>
             <p class="pilot-countdown__status" data-countdown-status aria-live="polite"></p>
           </section>
-
-          <div class="pilot-offer__meta" aria-label="Informations sur l’édition pilote">
-            <div>
-              <span>Capacité</span>
-              <strong>4 places</strong>
-            </div>
-            <div>
-              <span>Tarif pilote</span>
-              <strong>5&nbsp;000&nbsp;€ <small>HT</small></strong>
-            </div>
-          </div>
         </aside>
       </section>
 
