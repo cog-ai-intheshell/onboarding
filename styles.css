@@ -56,6 +56,8 @@ button { color: inherit; }
 h1, h2, h3, p { margin-top: 0; }
 .hero h1 { margin-bottom: 27px; font: 800 clamp(54px, 7vw, 102px)/.95 var(--font-display); letter-spacing: -.067em; }
 .hero h1 em, .questionnaire__intro h2 em { color: var(--color-accent); font-style: normal; }
+.hero__badge { width: fit-content; margin: -5px 0 28px; padding: 8px 12px; display: flex; align-items: center; gap: 9px; border: 1px solid var(--color-border-strong); border-radius: 999px; background: var(--color-background-soft); color: var(--color-text-muted); font-size: 9px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.hero__badge span { width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent); box-shadow: 0 0 10px var(--color-accent); }
 .hero__lead { max-width: 600px; margin-bottom: 46px; color: var(--color-text-muted); font-size: clamp(17px, 1.4vw, 21px); line-height: 1.55; }
 .hero__facts { display: flex; gap: clamp(28px, 4vw, 60px); }
 .hero__facts div { display: grid; gap: 5px; }
