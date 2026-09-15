@@ -505,6 +505,16 @@ blockquote::first-letter { color: var(--color-accent); }
 .pilot-offer h2 { max-width: 620px; margin: 0 0 26px; font: 700 clamp(28px, 4vw, 40px)/1.15 var(--font-display); letter-spacing: -.045em; }
 .pilot-offer > p:not(.pilot-offer__eyebrow) { max-width: 630px; }
 .pilot-offer > p strong { color: var(--color-text); font-weight: 600; }
+.pilot-countdown { margin-top: 38px; padding: 26px; border-radius: var(--radius-small); background: var(--color-input-background); }
+.pilot-countdown__title { margin: 0 0 20px !important; color: var(--color-text) !important; font-size: 13px !important; font-weight: 600; line-height: 1.5 !important; }
+.pilot-countdown__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(10px, 3vw, 28px); }
+.pilot-countdown__grid div { display: flex; flex-direction: column; gap: 5px; }
+.pilot-countdown__grid strong { color: var(--color-text); font: 700 clamp(28px, 5vw, 42px)/1 var(--font-display); letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
+.pilot-countdown__grid span { color: var(--color-text-dim); font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.pilot-countdown__status { min-height: 0; margin: 0 !important; color: var(--color-accent-bright) !important; font-size: 14px !important; font-weight: 600; }
+.pilot-countdown.is-expired .pilot-countdown__grid { display: none; }
+.pilot-countdown.is-expired .pilot-countdown__title { margin-bottom: 8px !important; }
+.pilot-countdown.is-expired .pilot-countdown__status { margin-top: 0 !important; }
 .pilot-offer__meta { margin-top: 38px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
 .pilot-offer__meta div { display: flex; flex-direction: column; gap: 7px; }
 .pilot-offer__meta span { color: var(--color-text-dim); font-size: 10px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
@@ -530,6 +540,10 @@ blockquote::first-letter { color: var(--color-accent); }
   .text-page__content p, .text-page__content li { font-size: 16px; }
   .pilot-offer { margin-top: 44px; padding: 30px 26px; }
   .pilot-offer h2 { font-size: 29px; }
+  .pilot-countdown { margin-top: 30px; padding: 22px 18px; }
+  .pilot-countdown__grid { gap: 8px; }
+  .pilot-countdown__grid strong { font-size: 28px; }
+  .pilot-countdown__grid span { font-size: 8px; letter-spacing: .06em; }
   .pilot-offer__meta { grid-template-columns: 1fr; gap: 22px; }
   .text-section { margin-bottom: 82px; }
   .text-section h2 { font-size: 34px; }
