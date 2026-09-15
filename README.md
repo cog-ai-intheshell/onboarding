@@ -1,12 +1,12 @@
 # NXT — Onboarding Bootcamp
 
-Application d’onboarding en français déployable sur Vercel. Le frontend est en HTML, CSS et JavaScript, les questions restent dans un fichier JSON, l’API est écrite en Python et les données persistantes sont stockées dans PostgreSQL avec Neon.
+Application d’onboarding en français déployable sur Vercel. Le frontend est en HTML, CSS et JavaScript, l’API est écrite en Python et les données persistantes sont stockées dans PostgreSQL avec Neon.
 
 ## Fonctionnalités
 
 - Accès participant avec un code d’invitation.
 - Collecte du nom, du prénom, du téléphone et de l’email avant le questionnaire.
-- Questionnaire vertical à réponses libres, généré depuis `questions.json`.
+- Questionnaire vertical à réponses libres, modifiable depuis l’Admin.
 - Sauvegarde et restauration des brouillons par code.
 - Enregistrement définitif des réponses dans PostgreSQL.
 - Espace administrateur protégé par un mot de passe fort.
@@ -20,7 +20,7 @@ Application d’onboarding en français déployable sur Vercel. Le frontend est 
 | Pages | HTML |
 | Styles | CSS avec tokens `--color-*` |
 | Interactions | JavaScript natif |
-| Questions | `questions.json` |
+| Questions | PostgreSQL avec `questions.json` comme contenu initial |
 | API | Fonction Python Vercel |
 | Données | PostgreSQL avec Neon |
 | Hébergement | Vercel |
@@ -65,7 +65,9 @@ Le CLI indique l’adresse locale à ouvrir. L’accueil et l’administration s
 
 ## Modifier les questions
 
-Les questions sont définies dans `questions.json`. Elles peuvent être ajoutées, supprimées, réordonnées ou modifiées directement.
+Le moyen recommandé est d’ouvrir `/admin.html`, puis la section **Questions**. Elle permet de modifier les titres, explications et textes indicatifs, d’ajouter ou supprimer une question, de changer leur ordre et de choisir si une réponse est obligatoire. La sauvegarde publie immédiatement le nouveau questionnaire, sans redéploiement.
+
+Le fichier `questions.json` sert uniquement à initialiser une base vide lors de la première migration. Une fois la base initialisée, les questions de production résident dans Neon.
 
 ```json
 {
@@ -77,7 +79,7 @@ Les questions sont définies dans `questions.json`. Elles peuvent être ajoutée
 }
 ```
 
-Le champ `id` doit être unique et stable. Les réponses ne possèdent aucune limite minimale ou maximale ; une question obligatoire doit simplement contenir un texte non vide.
+L’Admin conserve automatiquement les identifiants techniques des questions. Les réponses ne possèdent aucune limite minimale ou maximale ; une question obligatoire doit simplement contenir un texte non vide.
 
 ## Créer un code d’accès
 
@@ -109,6 +111,7 @@ Le schéma se trouve dans `db/schema.sql`. Il contient :
 
 - `access_codes` pour les invitations ;
 - `participants` pour les coordonnées associées à chaque code ;
+- `questionnaire_questions` pour le contenu et l’ordre du questionnaire ;
 - `drafts` pour les sauvegardes temporaires ;
 - `submissions` pour les réponses définitives.
 

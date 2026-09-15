@@ -56,6 +56,8 @@ def main() -> None:
     schema = (ROOT / "db" / "schema.sql").read_text(encoding="utf-8")
     drafts = read_json("drafts.json", {})
     submissions = read_json("responses.json", [])
+    question_data = read_json("questions.json", {"questions": []})
+    questions = question_data.get("questions", []) if isinstance(question_data, dict) else []
     codes = normalized_codes()
 
     if isinstance(drafts, dict):
@@ -69,8 +71,30 @@ def main() -> None:
 
     imported_drafts = 0
     imported_submissions = 0
+    imported_questions = 0
     with psycopg.connect(database_url) as connection:
         connection.execute(schema)
+
+        question_count = connection.execute("SELECT COUNT(*) FROM questionnaire_questions").fetchone()[0]
+        if question_count == 0:
+            for position, question in enumerate(questions, start=1):
+                if not isinstance(question, dict) or not question.get("id") or not question.get("title"):
+                    continue
+                connection.execute(
+                    """
+                    INSERT INTO questionnaire_questions (id, title, helper, placeholder, required, position)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        str(question["id"]),
+                        str(question["title"]).strip(),
+                        str(question.get("helper", "")).strip(),
+                        str(question.get("placeholder", "Ta réponse…")).strip(),
+                        question.get("required", True) is not False,
+                        position,
+                    ),
+                )
+                imported_questions += 1
 
         for code in sorted(codes):
             connection.execute(
@@ -121,7 +145,10 @@ def main() -> None:
                 )
                 imported_submissions += max(result.rowcount, 0)
 
-    print(f"Migration terminée : {len(codes)} code(s), {imported_drafts} brouillon(s), {imported_submissions} soumission(s) importée(s).")
+    print(
+        f"Migration terminée : {len(codes)} code(s), {imported_questions} question(s), "
+        f"{imported_drafts} brouillon(s), {imported_submissions} soumission(s) importée(s)."
+    )
 
 
 if __name__ == "__main__":

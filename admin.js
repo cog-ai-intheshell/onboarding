@@ -2,6 +2,8 @@ const adminState = {
   token: sessionStorage.getItem("nxt_admin_token") || "",
   submissions: [],
   codes: [],
+  questions: [],
+  questionsDirty: false,
 };
 
 const adminElements = {
@@ -24,6 +26,12 @@ const adminElements = {
   codeList: document.querySelector("#admin-code-list"),
   codeCount: document.querySelector("#code-count"),
   codePlural: document.querySelector("#code-plural"),
+  questionList: document.querySelector("#admin-question-list"),
+  questionCount: document.querySelector("#question-count"),
+  questionPlural: document.querySelector("#question-plural"),
+  addQuestion: document.querySelector("#add-question"),
+  saveQuestions: document.querySelector("#save-questions"),
+  questionFeedback: document.querySelector("#question-feedback"),
 };
 
 adminElements.loginForm.addEventListener("submit", async (event) => {
@@ -65,6 +73,8 @@ adminElements.logout.addEventListener("click", () => {
   adminState.token = "";
   adminState.submissions = [];
   adminState.codes = [];
+  adminState.questions = [];
+  adminState.questionsDirty = false;
   adminElements.dashboard.hidden = true;
   adminElements.login.hidden = false;
   adminElements.loginForm.reset();
@@ -84,6 +94,13 @@ adminElements.codeForm.addEventListener("submit", async (event) => {
 });
 
 adminElements.generateCode.addEventListener("click", () => createCode(true));
+adminElements.addQuestion.addEventListener("click", addQuestion);
+adminElements.saveQuestions.addEventListener("click", saveQuestions);
+
+window.addEventListener("beforeunload", (event) => {
+  if (!adminState.questionsDirty) return;
+  event.preventDefault();
+});
 
 async function showDashboard() {
   adminElements.login.hidden = true;
@@ -92,7 +109,7 @@ async function showDashboard() {
   adminElements.empty.hidden = true;
 
   try {
-    await Promise.all([loadSubmissions(), loadCodes()]);
+    await Promise.all([loadSubmissions(), loadCodes(), loadQuestionsEditor()]);
   } catch (error) {
     if (error.message === "SESSION_EXPIRED") return;
     adminElements.loading.textContent = error.message === "Failed to fetch" ? "Le serveur ne répond pas." : error.message;
@@ -138,6 +155,142 @@ async function loadCodes() {
   const data = await adminFetch("/api/admin/codes");
   adminState.codes = Array.isArray(data.codes) ? data.codes : [];
   renderCodes();
+}
+
+async function loadQuestionsEditor() {
+  const data = await adminFetch("/api/admin/questions");
+  adminState.questions = Array.isArray(data.questions) ? data.questions : [];
+  adminState.questionsDirty = false;
+  renderQuestionEditor();
+  setQuestionFeedback("");
+}
+
+function renderQuestionEditor() {
+  adminElements.questionCount.textContent = adminState.questions.length;
+  adminElements.questionPlural.hidden = adminState.questions.length === 1;
+  adminElements.questionList.replaceChildren();
+
+  adminState.questions.forEach((question, index) => {
+    const editor = document.createElement("article");
+    editor.className = "admin-question-editor";
+    editor.innerHTML = `
+      <div class="admin-question-editor__header">
+        <span>Question ${index + 1}</span>
+        <div class="admin-question-editor__controls">
+          <button type="button" data-action="up" aria-label="Monter la question ${index + 1}">↑</button>
+          <button type="button" data-action="down" aria-label="Descendre la question ${index + 1}">↓</button>
+          <button type="button" data-action="remove">Supprimer</button>
+        </div>
+      </div>
+      <label>Titre<input type="text" data-field="title" maxlength="300" required /></label>
+      <label>Explication<textarea data-field="helper" rows="4" maxlength="5000"></textarea></label>
+      <label>Texte indicatif de la réponse<input type="text" data-field="placeholder" maxlength="300" /></label>
+      <label class="admin-question-editor__required"><input type="checkbox" data-field="required" /> Réponse obligatoire</label>
+    `;
+
+    const title = editor.querySelector('[data-field="title"]');
+    const helper = editor.querySelector('[data-field="helper"]');
+    const placeholder = editor.querySelector('[data-field="placeholder"]');
+    const required = editor.querySelector('[data-field="required"]');
+    title.value = question.title || "";
+    helper.value = question.helper || "";
+    placeholder.value = question.placeholder || "Ta réponse…";
+    required.checked = question.required !== false;
+
+    [title, helper, placeholder].forEach((input) => {
+      input.addEventListener("input", () => {
+        question[input.dataset.field] = input.value;
+        markQuestionsDirty();
+      });
+    });
+    required.addEventListener("change", () => {
+      question.required = required.checked;
+      markQuestionsDirty();
+    });
+
+    const up = editor.querySelector('[data-action="up"]');
+    const down = editor.querySelector('[data-action="down"]');
+    up.disabled = index === 0;
+    down.disabled = index === adminState.questions.length - 1;
+    up.addEventListener("click", () => moveQuestion(index, -1));
+    down.addEventListener("click", () => moveQuestion(index, 1));
+    editor.querySelector('[data-action="remove"]').addEventListener("click", () => removeQuestion(index));
+
+    adminElements.questionList.appendChild(editor);
+  });
+}
+
+function addQuestion() {
+  adminState.questions.push({
+    id: "",
+    title: "",
+    helper: "",
+    placeholder: "Ta réponse…",
+    required: true,
+  });
+  renderQuestionEditor();
+  markQuestionsDirty();
+  const lastEditor = adminElements.questionList.lastElementChild;
+  lastEditor.scrollIntoView({ behavior: "smooth", block: "center" });
+  lastEditor.querySelector('[data-field="title"]').focus({ preventScroll: true });
+}
+
+function removeQuestion(index) {
+  if (adminState.questions.length === 1) {
+    setQuestionFeedback("Le questionnaire doit conserver au moins une question.", true);
+    return;
+  }
+  adminState.questions.splice(index, 1);
+  renderQuestionEditor();
+  markQuestionsDirty();
+}
+
+function moveQuestion(index, direction) {
+  const destination = index + direction;
+  if (destination < 0 || destination >= adminState.questions.length) return;
+  const [question] = adminState.questions.splice(index, 1);
+  adminState.questions.splice(destination, 0, question);
+  renderQuestionEditor();
+  markQuestionsDirty();
+}
+
+function markQuestionsDirty() {
+  adminState.questionsDirty = true;
+  setQuestionFeedback("Modifications non sauvegardées.");
+}
+
+async function saveQuestions() {
+  const invalidIndex = adminState.questions.findIndex((question) => !question.title.trim());
+  if (invalidIndex !== -1) {
+    const editor = adminElements.questionList.children[invalidIndex];
+    const input = editor.querySelector('[data-field="title"]');
+    input.classList.add("is-invalid");
+    input.focus();
+    setQuestionFeedback("Chaque question doit avoir un titre.", true);
+    return;
+  }
+
+  setAdminButtonLoading(adminElements.saveQuestions, true, "Sauvegarde…", "Sauvegarder les questions");
+  try {
+    const data = await adminFetch("/api/admin/questions", {
+      method: "PUT",
+      body: JSON.stringify({ questions: adminState.questions }),
+    });
+    adminState.questions = data.questions;
+    adminState.questionsDirty = false;
+    renderQuestionEditor();
+    setQuestionFeedback("Les questions sont publiées immédiatement.", false, true);
+  } catch (error) {
+    if (error.message !== "SESSION_EXPIRED") setQuestionFeedback(error.message, true);
+  } finally {
+    setAdminButtonLoading(adminElements.saveQuestions, false, "Sauvegarde…", "Sauvegarder les questions");
+  }
+}
+
+function setQuestionFeedback(message, error = false, success = false) {
+  adminElements.questionFeedback.textContent = message;
+  adminElements.questionFeedback.classList.toggle("is-error", error);
+  adminElements.questionFeedback.classList.toggle("is-success", success);
 }
 
 async function createCode(generate) {

@@ -134,6 +134,23 @@ def main() -> None:
         assert status == 200 and admin_payload.get("adminToken"), "La connexion Admin a échoué."
         admin_token = admin_payload["adminToken"]
 
+        status, admin_questions_payload = request_json(
+            base_url,
+            "/api/admin/questions",
+            token=admin_token,
+        )
+        admin_questions = admin_questions_payload.get("questions", [])
+        assert status == 200 and admin_questions == questions, "Les questions ne sont pas chargées dans l’Admin."
+
+        status, saved_questions_payload = request_json(
+            base_url,
+            "/api/admin/questions",
+            method="PUT",
+            payload={"questions": admin_questions},
+            token=admin_token,
+        )
+        assert status == 200 and saved_questions_payload.get("questions") == questions, "La sauvegarde des questions a échoué."
+
         status, codes_payload = request_json(
             base_url,
             "/api/admin/codes",
@@ -171,7 +188,7 @@ def main() -> None:
         saved_submission = next(item for item in responses_payload["submissions"] if item.get("id") == submission_id)
         assert saved_submission.get("participant") == test_profile, "Le profil n’est pas associé à la réponse Admin."
 
-        print(f"Parcours vérifié : profil, {len(questions)} question(s), brouillon, soumission et Admin opérationnels.")
+        print(f"Parcours vérifié : profil, {len(questions)} question(s) modifiables, brouillon, soumission et Admin opérationnels.")
     finally:
         with psycopg.connect(database_url) as connection:
             if submission_id:

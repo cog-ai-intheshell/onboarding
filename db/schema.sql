@@ -13,6 +13,19 @@ CREATE TABLE IF NOT EXISTS participants (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS questionnaire_questions (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  helper TEXT NOT NULL DEFAULT '',
+  placeholder TEXT NOT NULL DEFAULT 'Ta réponse…',
+  required BOOLEAN NOT NULL DEFAULT TRUE,
+  position INTEGER NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS questionnaire_questions_position_idx
+  ON questionnaire_questions (position);
+
 CREATE TABLE IF NOT EXISTS drafts (
   access_code TEXT PRIMARY KEY REFERENCES access_codes(code) ON DELETE CASCADE,
   answers JSONB NOT NULL DEFAULT '{}'::jsonb,

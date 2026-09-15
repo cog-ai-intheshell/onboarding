@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=16" />
+    <link rel="stylesheet" href="styles.css?v=19" />
   </head>
   <body class="admin-page">
     <header class="site-header admin-header">
@@ -68,6 +68,23 @@
           <div class="admin-code-list" id="admin-code-list"></div>
         </section>
 
+        <section class="admin-questions" aria-labelledby="admin-questions-title">
+          <div class="admin-section-heading">
+            <div>
+              <p class="admin-eyebrow">Contenu du formulaire</p>
+              <h2 id="admin-questions-title">Questions</h2>
+            </div>
+            <p><strong id="question-count">0</strong> question<span id="question-plural">s</span></p>
+          </div>
+          <p class="admin-section-intro">Modifie le texte affiché aux participants. Utilise les flèches pour changer l’ordre, puis sauvegarde l’ensemble.</p>
+          <div class="admin-question-list" id="admin-question-list"></div>
+          <div class="admin-question-actions">
+            <button class="button button--ghost" id="add-question" type="button"><span>Ajouter une question</span></button>
+            <button class="button button--primary" id="save-questions" type="button"><span>Sauvegarder les questions</span></button>
+          </div>
+          <p class="admin-question-feedback" id="question-feedback" role="status" aria-live="polite"></p>
+        </section>
+
         <div class="admin-section-heading admin-responses-heading">
           <div>
             <p class="admin-eyebrow">Questionnaires</p>
@@ -92,6 +109,6 @@
       </section>
     </main>
 
-    <script src="admin.js?v=3" defer></script>
+    <script src="admin.js?v=4" defer></script>
   </body>
 </html>

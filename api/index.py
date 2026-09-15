@@ -12,7 +12,6 @@ import secrets
 import time
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
-from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import psycopg
@@ -20,8 +19,6 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-QUESTIONS_FILE = BASE_DIR / "questions.json"
 ID_PATTERN = re.compile(r"^[a-zA-Z0-9_-]{1,80}$")
 NEW_ACCESS_CODE_PATTERN = re.compile(r"^[A-Z]{1,6}$")
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -34,39 +31,22 @@ class ConfigurationError(RuntimeError):
     """La configuration du service est absente ou invalide."""
 
 
-def read_json(path: Path, fallback):
-    try:
-        with path.open("r", encoding="utf-8") as file:
-            return json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError, OSError):
-        return fallback
-
-
 def get_questions() -> list[dict]:
-    data = read_json(QUESTIONS_FILE, {"questions": []})
-    entries = data.get("questions", []) if isinstance(data, dict) else []
-    questions = []
-    seen_ids = set()
-
-    for entry in entries:
-        if not isinstance(entry, dict):
-            continue
-        question_id = entry.get("id")
-        title = entry.get("title")
-        if not isinstance(question_id, str) or not ID_PATTERN.match(question_id) or question_id in seen_ids:
-            continue
-        if not isinstance(title, str) or not title.strip():
-            continue
-        seen_ids.add(question_id)
-        questions.append({
-            "id": question_id,
-            "title": title.strip(),
-            "helper": str(entry.get("helper", "")).strip(),
-            "placeholder": str(entry.get("placeholder", "Ta réponse…")).strip(),
-            "required": entry.get("required", True) is not False,
-        })
-
-    return questions
+    with database_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT id, title, helper, placeholder, required
+            FROM questionnaire_questions
+            ORDER BY position ASC
+            """
+        ).fetchall()
+    return [{
+        "id": row["id"],
+        "title": row["title"],
+        "helper": row["helper"],
+        "placeholder": row["placeholder"],
+        "required": row["required"],
+    } for row in rows]
 
 
 def database_connection():
@@ -160,6 +140,8 @@ class handler(BaseHTTPRequestHandler):
                 self.get_admin_responses()
             elif route == "admin-codes":
                 self.get_admin_codes()
+            elif route == "admin-questions":
+                self.get_admin_questions()
             else:
                 self.send_json({"message": "Route introuvable."}, HTTPStatus.NOT_FOUND)
         except Exception as error:  # La réponse reste neutre, le détail part dans les logs Vercel.
@@ -189,6 +171,15 @@ class handler(BaseHTTPRequestHandler):
         try:
             if self.requested_route() == "admin-codes":
                 self.update_admin_code()
+            else:
+                self.send_json({"message": "Route introuvable."}, HTTPStatus.NOT_FOUND)
+        except Exception as error:
+            self.handle_server_error(error)
+
+    def do_PUT(self):
+        try:
+            if self.requested_route() == "admin-questions":
+                self.save_admin_questions()
             else:
                 self.send_json({"message": "Route introuvable."}, HTTPStatus.NOT_FOUND)
         except Exception as error:
@@ -374,6 +365,80 @@ class handler(BaseHTTPRequestHandler):
             "submissionCount": row["submission_count"],
         } for row in rows]
         self.send_json({"codes": codes, "count": len(codes)})
+
+    def get_admin_questions(self):
+        if not self.authenticated_admin():
+            self.send_json({"message": "Session administrateur invalide ou expirée."}, HTTPStatus.UNAUTHORIZED)
+            return
+        questions = get_questions()
+        self.send_json({"questions": questions, "count": len(questions)})
+
+    def save_admin_questions(self):
+        if not self.authenticated_admin():
+            self.send_json({"message": "Session administrateur invalide ou expirée."}, HTTPStatus.UNAUTHORIZED)
+            return
+
+        body = self.read_body()
+        entries = body.get("questions") if isinstance(body, dict) else None
+        if not isinstance(entries, list) or not 1 <= len(entries) <= 50:
+            self.send_json({"message": "Le questionnaire doit contenir entre 1 et 50 questions."}, HTTPStatus.BAD_REQUEST)
+            return
+
+        questions = []
+        seen_ids = set()
+        for entry in entries:
+            if not isinstance(entry, dict):
+                self.send_json({"message": "Une question est invalide."}, HTTPStatus.BAD_REQUEST)
+                return
+
+            question_id = entry.get("id", "")
+            if not isinstance(question_id, str) or not ID_PATTERN.fullmatch(question_id):
+                question_id = f"q_{secrets.token_hex(6)}"
+            if question_id in seen_ids:
+                self.send_json({"message": "Deux questions possèdent le même identifiant."}, HTTPStatus.BAD_REQUEST)
+                return
+
+            title = entry.get("title", "")
+            helper = entry.get("helper", "")
+            placeholder = entry.get("placeholder", "Ta réponse…")
+            required = entry.get("required", True)
+            if not isinstance(title, str) or not title.strip() or len(title.strip()) > 300:
+                self.send_json({"message": "Chaque question doit avoir un titre valide."}, HTTPStatus.BAD_REQUEST)
+                return
+            if not isinstance(helper, str) or len(helper.strip()) > 5_000:
+                self.send_json({"message": "Une explication de question est trop longue."}, HTTPStatus.BAD_REQUEST)
+                return
+            if not isinstance(placeholder, str) or len(placeholder.strip()) > 300:
+                self.send_json({"message": "Un texte indicatif est trop long."}, HTTPStatus.BAD_REQUEST)
+                return
+            if not isinstance(required, bool):
+                self.send_json({"message": "Le statut obligatoire d’une question est invalide."}, HTTPStatus.BAD_REQUEST)
+                return
+
+            seen_ids.add(question_id)
+            questions.append({
+                "id": question_id,
+                "title": title.strip(),
+                "helper": helper.strip(),
+                "placeholder": placeholder.strip() or "Ta réponse…",
+                "required": required,
+            })
+
+        with database_connection() as connection:
+            connection.execute("DELETE FROM questionnaire_questions")
+            for position, question in enumerate(questions, start=1):
+                connection.execute(
+                    """
+                    INSERT INTO questionnaire_questions (id, title, helper, placeholder, required, position, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, NOW())
+                    """,
+                    (
+                        question["id"], question["title"], question["helper"],
+                        question["placeholder"], question["required"], position,
+                    ),
+                )
+
+        self.send_json({"saved": True, "questions": questions, "count": len(questions)})
 
     def create_admin_code(self):
         if not self.authenticated_admin():
