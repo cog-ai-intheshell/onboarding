@@ -161,6 +161,8 @@ Les variables `DATABASE_URL`, `NXT_ADMIN_PASSWORD` et `NXT_SERVER_SECRET` doiven
 | `db/add_code.py` | Ajout d’un code d’accès. |
 | `vercel.json` | Routes, fonction et en-têtes Vercel. |
 | `requirements.txt` | Dépendances Python. |
+| `pyproject.toml` | Configuration Python utilisée par Vercel. |
+| `uv.lock` | Versions reproductibles des dépendances. |
 
 ## Données privées
 
