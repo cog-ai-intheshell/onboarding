@@ -1,73 +1,52 @@
 {
   "questions": [
     {
-      "id": "presentation",
-      "title": "Présente-toi.",
-      "helper": "Qui es-tu, quel est ton parcours et qu’est-ce qui t’anime aujourd’hui ?",
-      "placeholder": "Je suis…",
+      "id": "situation_actuelle",
+      "title": "1. Ta situation actuelle",
+      "helper": "En quelques lignes, où en es-tu aujourd’hui dans ton projet ?\nQu’est-ce qui fonctionne déjà particulièrement bien ?\nQu’est-ce qui ne fonctionne pas encore comme tu le voudrais ?",
+      "placeholder": "Aujourd’hui, mon projet…",
       "required": true
     },
     {
-      "id": "maitrises",
-      "title": "Quelles expertises maîtrises-tu ?",
-      "helper": "Parle-nous de tes savoir-faire, outils, méthodes ou domaines de prédilection.",
-      "placeholder": "Mes principales forces sont…",
+      "id": "construction_visee",
+      "title": "2. Ce que tu veux vraiment construire",
+      "helper": "Si ton projet évoluait exactement comme tu le souhaites, à quoi ressemblerait-il dans 3 ans ?\nQu’est-ce que ce projet doit te permettre de vivre ou de devenir ?",
+      "placeholder": "Dans trois ans, je veux avoir construit…",
       "required": true
     },
     {
-      "id": "entreprise_projet",
-      "title": "Présente ton entreprise ou ton projet.",
-      "helper": "La mission, le produit, les personnes concernées… donne-nous le contexte essentiel.",
-      "placeholder": "Mon projet consiste à…",
+      "id": "vision_personnelle",
+      "title": "3. Ta vision personnelle",
+      "helper": "Pourquoi cette ambition est-elle importante pour toi ?",
+      "placeholder": "Cette ambition est importante pour moi parce que…",
       "required": true
     },
     {
-      "id": "avancement",
-      "title": "Où en es-tu aujourd’hui ?",
-      "helper": "Idée, validation du marché, lancement, croissance ou transformation : décris ton étape et ce qu’elle implique.",
-      "placeholder": "Aujourd’hui, mon projet en est à…",
+      "id": "blocages_actuels",
+      "title": "4. Ce qui te bloque aujourd’hui",
+      "helper": "Quel est aujourd’hui le principal élément qui t’empêche d’atteindre ce niveau ?\nY a-t-il un sujet sur lequel tu as l’impression de tourner en rond ? Si oui, lequel ?\nQu’est-ce que tu sais devoir changer, mais que tu n’as pas encore réussi à changer ?",
+      "placeholder": "Aujourd’hui, mon principal blocage…",
       "required": true
     },
     {
-      "id": "probleme_prioritaire",
-      "title": "Quel problème concret veux-tu absolument avoir fait avancer avant de repartir ?",
-      "helper": "Plus le problème sera précis, plus nous pourrons t’aider à créer du mouvement.",
-      "placeholder": "À la fin du bootcamp, je veux avoir…",
+      "id": "experience",
+      "title": "5. Ton expérience",
+      "helper": "Qu’as-tu déjà essayé pour faire avancer ton projet ?\nQu’est-ce qui a fonctionné ?\nQu’est-ce qui n’a pas fonctionné, et pourquoi penses-tu que cela n’a pas fonctionné ?",
+      "placeholder": "J’ai déjà essayé…",
       "required": true
     },
     {
-      "id": "comportement",
-      "title": "Quel comportement voudrais-tu mieux comprendre ou faire évoluer ?",
-      "helper": "Le tien, celui d’un client, d’une équipe ou d’un marché.",
-      "placeholder": "J’aimerais mieux comprendre pourquoi…",
+      "id": "cinq_jours_nxt",
+      "title": "6. Les cinq jours NXT",
+      "helper": "À la fin des cinq jours, qu’est-ce qui devrait absolument avoir changé pour que tu considères cette expérience comme une réussite ?",
+      "placeholder": "À la fin des cinq jours…",
       "required": true
     },
     {
-      "id": "solutions_testees",
-      "title": "Qu’as-tu déjà essayé pour résoudre ce problème ? Avec quels résultats ?",
-      "helper": "Même les tentatives imparfaites ou les échecs sont précieux pour comprendre le terrain.",
-      "placeholder": "J’ai déjà testé… Cela a donné…",
-      "required": true
-    },
-    {
-      "id": "attentes",
-      "title": "Qu’attends-tu de ce bootcamp ?",
-      "helper": "Compétences, méthodes, prises de conscience, rencontres… sois spécifique.",
-      "placeholder": "J’attends de cette expérience…",
-      "required": true
-    },
-    {
-      "id": "pourquoi_maintenant",
-      "title": "Pourquoi veux-tu faire ce bootcamp maintenant ?",
-      "helper": "Qu’est-ce qui rend ce moment particulier ou urgent pour toi ?",
-      "placeholder": "C’est le bon moment parce que…",
-      "required": true
-    },
-    {
-      "id": "format_prefere",
-      "title": "Comment préfères-tu vivre ce bootcamp ?",
-      "helper": "Seul·e ou avec d’autres participants ? Explique-nous le cadre dans lequel tu te sentirais le mieux.",
-      "placeholder": "Je préférerais… parce que…",
+      "id": "objectif_nxt",
+      "title": "7. Dernière question",
+      "helper": "Si tu devais résumer en une phrase ce que tu veux réellement obtenir de NXT, qu’écrirais-tu ?",
+      "placeholder": "Ce que je veux réellement obtenir de NXT…",
       "required": true
     }
   ]

@@ -155,7 +155,7 @@ blockquote::first-letter { color: var(--color-accent); }
 .questionnaire--simple .question-card { padding: 0; margin: 0 0 clamp(54px, 7vw, 76px); border: 0; }
 .questionnaire--simple .question-card:focus-within { border: 0; }
 .questionnaire--simple .question-title { margin-bottom: 18px; font-size: clamp(22px, 2.5vw, 30px); line-height: 1.25; }
-.questionnaire--simple .question-helper { max-width: 680px; margin: -8px 0 18px; color: var(--color-text-muted); font-size: 14px; line-height: 1.55; }
+.questionnaire--simple .question-helper { max-width: 680px; margin: -8px 0 18px; color: var(--color-text-muted); font-size: 14px; line-height: 1.75; white-space: pre-line; }
 .questionnaire--simple .answer-input { min-height: 150px; padding: 18px; border: 1px solid var(--color-input-border); border-radius: var(--radius-small); background: var(--color-input-background); font-size: 17px; transition: border-color var(--ease), background var(--ease), box-shadow var(--ease); }
 .questionnaire--simple .answer-input:hover { border-color: var(--color-input-border-hover); }
 .questionnaire--simple .answer-input:focus { border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-soft); }
