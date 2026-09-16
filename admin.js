@@ -37,6 +37,7 @@ const adminElements = {
   saveQuestions: document.querySelector("#save-questions"),
   questionFeedback: document.querySelector("#question-feedback"),
   planningCalendar: document.querySelector("#admin-planning-calendar"),
+  planningList: document.querySelector("#admin-planning-list"),
   planningMonth: document.querySelector("#admin-planning-month"),
   planningForm: document.querySelector("#admin-planning-form"),
   planningDate: document.querySelector("#admin-planning-date"),
@@ -465,6 +466,41 @@ function renderAdminPlanning() {
     day.innerHTML = `<span class="sprint-day__number">${date.getUTCDate()}</span>${slot ? `<span class="sprint-day__range">${rangeContent}</span>` : ""}`;
     adminElements.planningCalendar.appendChild(day);
   }
+  renderAdminPlanningList();
+}
+
+function renderAdminPlanningList() {
+  adminElements.planningList.replaceChildren();
+  adminState.planningSlots.forEach((slot) => {
+    const row = document.createElement("div");
+    row.className = "admin-planning-row";
+
+    const identity = document.createElement("div");
+    const dates = document.createElement("strong");
+    dates.textContent = adminLongRange(slot.startDate);
+    const detail = document.createElement("small");
+    detail.textContent = slot.reservedBy
+      ? `Réservée par ${slot.participantName || slot.reservedBy}`
+      : (slot.taken ? "Bloquée manuellement" : "Réservable par un participant");
+    identity.append(dates, detail);
+
+    const status = document.createElement("span");
+    status.className = `admin-planning-row__status ${slot.taken ? "is-taken" : "is-open"}`;
+    status.textContent = slot.taken ? "Déjà prise" : "Disponible";
+
+    const action = document.createElement("button");
+    action.type = "button";
+    action.className = slot.taken ? "admin-planning-row__release" : "admin-planning-row__block";
+    action.textContent = slot.taken ? "Remettre disponible" : "Marquer comme prise";
+    action.addEventListener("click", async () => {
+      action.disabled = true;
+      await togglePlanningSlot(slot);
+      action.disabled = false;
+    });
+
+    row.append(identity, status, action);
+    adminElements.planningList.appendChild(row);
+  });
 }
 
 function startAdminPlanningDrag(event, slot, offset, day) {

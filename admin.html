@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=20" />
+    <link rel="stylesheet" href="styles.css?v=21" />
   </head>
   <body class="admin-page">
     <header class="site-header admin-header">
@@ -91,6 +91,11 @@
             <div class="sprint-calendar__grid" id="admin-planning-calendar"></div>
             <div class="sprint-calendar__legend"><span><i></i>Disponible</span><span><i></i>Déjà pris</span></div>
           </div>
+          <div class="admin-planning__list-heading">
+            <h3>Gestion des périodes</h3>
+            <span>Modifie leur disponibilité sans déplacer les dates.</span>
+          </div>
+          <div class="admin-planning__list" id="admin-planning-list"></div>
           <form class="admin-planning__form" id="admin-planning-form">
             <label for="admin-planning-date">Premier jour du nouveau sprint
               <input id="admin-planning-date" type="date" required />
@@ -141,6 +146,6 @@
       </section>
     </main>
 
-    <script src="admin.js?v=5" defer></script>
+    <script src="admin.js?v=6" defer></script>
   </body>
 </html>

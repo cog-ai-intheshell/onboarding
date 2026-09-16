@@ -217,6 +217,16 @@ def main() -> None:
         saved_slot = next((item for item in slots_payload.get("slots", []) if item.get("id") == sprint_slot_id), None)
         assert status == 200 and saved_slot and saved_slot.get("reservedBy") == temporary_code, "La réservation n’apparaît pas dans l’Admin."
 
+        status, released_payload = request_json(
+            base_url,
+            "/api/admin/planning",
+            method="PATCH",
+            payload={"id": sprint_slot_id, "taken": False},
+            token=admin_token,
+        )
+        released_slot = released_payload.get("slot", {})
+        assert status == 200 and released_slot.get("taken") is False and not released_slot.get("reservedBy"), "La remise à disposition a échoué."
+
         print(f"Parcours vérifié : profil, questionnaire, planning, réservation et Admin opérationnels.")
     finally:
         with psycopg.connect(database_url) as connection:
