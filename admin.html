@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=19" />
+    <link rel="stylesheet" href="styles.css?v=20" />
   </head>
   <body class="admin-page">
     <header class="site-header admin-header">
@@ -68,6 +68,38 @@
           <div class="admin-code-list" id="admin-code-list"></div>
         </section>
 
+        <section class="admin-planning" aria-labelledby="admin-planning-title">
+          <div class="admin-section-heading">
+            <div>
+              <p class="admin-eyebrow">Organisation des bootcamps</p>
+              <h2 id="admin-planning-title">Planning des sprints</h2>
+            </div>
+          </div>
+          <p class="admin-section-intro">Chaque bande représente cinq jours consécutifs. Clique sur une période pour la rendre disponible ou déjà prise, et déplace-la directement dans le calendrier.</p>
+          <div class="admin-planning__stats">
+            <div><span>Périodes</span><strong id="planning-total">0</strong></div>
+            <div><span>Disponibles</span><strong id="planning-open">0</strong></div>
+            <div><span>Déjà prises</span><strong id="planning-taken">0</strong></div>
+          </div>
+          <div class="planning-drag-hint"><span aria-hidden="true">↔</span><p>Glisse une bande sur une autre date. Les cinq jours se déplacent ensemble et les chevauchements sont refusés.</p></div>
+          <div class="sprint-calendar" aria-label="Calendrier de gestion des sprints">
+            <div class="sprint-calendar__header">
+              <strong id="admin-planning-month"></strong>
+              <div><button type="button" data-admin-month-shift="-1" aria-label="Mois précédent">←</button><button type="button" data-admin-month-shift="1" aria-label="Mois suivant">→</button></div>
+            </div>
+            <div class="sprint-calendar__weekdays" aria-hidden="true"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
+            <div class="sprint-calendar__grid" id="admin-planning-calendar"></div>
+            <div class="sprint-calendar__legend"><span><i></i>Disponible</span><span><i></i>Déjà pris</span></div>
+          </div>
+          <form class="admin-planning__form" id="admin-planning-form">
+            <label for="admin-planning-date">Premier jour du nouveau sprint
+              <input id="admin-planning-date" type="date" required />
+            </label>
+            <button class="button button--ghost" type="submit"><span>Ajouter les 5 jours</span></button>
+          </form>
+          <p class="admin-planning__feedback" id="admin-planning-feedback" role="status" aria-live="polite"></p>
+        </section>
+
         <section class="admin-questions" aria-labelledby="admin-questions-title">
           <div class="admin-section-heading">
             <div>
@@ -109,6 +141,6 @@
       </section>
     </main>
 
-    <script src="admin.js?v=4" defer></script>
+    <script src="admin.js?v=5" defer></script>
   </body>
 </html>

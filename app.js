@@ -332,8 +332,7 @@ function initializeQuestionnairePage() {
       if (!response.ok) throw new Error(data.message || "Impossible d’enregistrer tes réponses.");
 
       localStorage.removeItem("nxt_onboarding_draft");
-      sessionStorage.removeItem("nxt_access_token");
-      window.location.assign("/experience.html");
+      window.location.assign("/planning.html");
     } catch (error) {
       elements.submitError.textContent = error.message === "Failed to fetch"
         ? "Connexion impossible. Vérifie le serveur puis réessaie."

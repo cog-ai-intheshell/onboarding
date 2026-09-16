@@ -96,6 +96,18 @@ def main() -> None:
                 )
                 imported_questions += 1
 
+        slot_count = connection.execute("SELECT COUNT(*) FROM sprint_slots").fetchone()[0]
+        if slot_count == 0:
+            connection.execute(
+                """
+                INSERT INTO sprint_slots (start_date, taken)
+                VALUES ('2026-10-03', FALSE),
+                       ('2026-10-10', TRUE),
+                       ('2026-10-18', FALSE),
+                       ('2026-10-26', TRUE)
+                """
+            )
+
         for code in sorted(codes):
             connection.execute(
                 """

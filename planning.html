@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Choix de la période du sprint NXT." />
+    <meta name="theme-color" content="#08090c" />
+    <title>Choisis ton sprint — NXT</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=20" />
+  </head>
+  <body class="planning-page">
+    <div class="grain" aria-hidden="true"></div>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="NXT, retour à l’accueil">
+        <span class="brand__symbol" aria-hidden="true"></span><span>NXT</span>
+      </a>
+      <div class="header-status"><span class="header-status__dot" aria-hidden="true"></span><span>Dernière étape</span></div>
+    </header>
+
+    <main class="planning-main">
+      <section class="planning-intro">
+        <div>
+          <p class="eyebrow">Dernière étape</p>
+          <h1>Choisis ton sprint.</h1>
+          <p>Sélectionne une période disponible ou déplace-la sur les dates qui te conviennent. Ta place sera réservée après confirmation.</p>
+        </div>
+        <aside><strong>5 jours consécutifs</strong><span>Le sprint peut commencer n’importe quel jour de la semaine.</span></aside>
+      </section>
+
+      <section aria-labelledby="planning-title">
+        <div class="planning-heading">
+          <h2 id="planning-title">Calendrier des sessions</h2>
+          <span>Clique ou déplace une période disponible</span>
+        </div>
+        <div class="planning-drag-hint"><span aria-hidden="true">↔</span><p>Saisis la bande par l’une de ses extrémités. L’aperçu rouge montre immédiatement les cinq jours choisis.</p></div>
+        <div class="sprint-calendar" aria-label="Calendrier des périodes disponibles">
+          <div class="sprint-calendar__header">
+            <strong id="planning-month"></strong>
+            <div><button type="button" data-month-shift="-1" aria-label="Mois précédent">←</button><button type="button" data-month-shift="1" aria-label="Mois suivant">→</button></div>
+          </div>
+          <div class="sprint-calendar__weekdays" aria-hidden="true"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
+          <div class="sprint-calendar__grid" id="planning-calendar"></div>
+          <div class="sprint-calendar__legend"><span><i></i>Disponible</span><span><i></i>Déjà pris</span><span><i></i>Ton choix</span></div>
+        </div>
+        <p class="planning-error" id="planning-error" role="alert"></p>
+        <div class="planning-selection">
+          <div><span>Ton choix</span><strong id="planning-summary">Aucune période sélectionnée</strong></div>
+          <button class="button button--primary" id="reserve-slot" type="button" disabled><span>Réserver cette période</span><span aria-hidden="true">→</span></button>
+        </div>
+      </section>
+    </main>
+    <script src="planning.js?v=1" defer></script>
+  </body>
+</html>

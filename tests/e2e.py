@@ -58,6 +58,7 @@ def main() -> None:
     temporary_code = f"E2E-{secrets.token_hex(8).upper()}"
     generated_code = ""
     submission_id = ""
+    sprint_slot_id = None
 
     try:
         with psycopg.connect(database_url) as connection:
@@ -134,6 +135,29 @@ def main() -> None:
         assert status == 200 and admin_payload.get("adminToken"), "La connexion Admin a échoué."
         admin_token = admin_payload["adminToken"]
 
+        status, created_slot_payload = request_json(
+            base_url,
+            "/api/admin/planning",
+            method="POST",
+            payload={"startDate": "2099-12-01"},
+            token=admin_token,
+        )
+        assert status == 201 and created_slot_payload.get("slot", {}).get("id"), "La création d’un sprint a échoué."
+        sprint_slot_id = created_slot_payload["slot"]["id"]
+
+        status, planning_payload = request_json(base_url, "/api/planning", token=access_token)
+        available_ids = {slot.get("id") for slot in planning_payload.get("slots", []) if not slot.get("taken")}
+        assert status == 200 and sprint_slot_id in available_ids, "Le planning participant est incomplet."
+
+        status, reservation_payload = request_json(
+            base_url,
+            "/api/planning/reserve",
+            method="POST",
+            payload={"slotId": sprint_slot_id, "startDate": "2099-12-01"},
+            token=access_token,
+        )
+        assert status == 201 and reservation_payload.get("reserved"), "La réservation du sprint a échoué."
+
         status, admin_questions_payload = request_json(
             base_url,
             "/api/admin/questions",
@@ -187,10 +211,17 @@ def main() -> None:
         assert status == 200 and submission_id in submission_ids, "La soumission n’apparaît pas dans l’Admin."
         saved_submission = next(item for item in responses_payload["submissions"] if item.get("id") == submission_id)
         assert saved_submission.get("participant") == test_profile, "Le profil n’est pas associé à la réponse Admin."
+        assert saved_submission.get("sprint", {}).get("id") == sprint_slot_id, "Le sprint n’est pas associé à la réponse Admin."
 
-        print(f"Parcours vérifié : profil, {len(questions)} question(s) modifiables, brouillon, soumission et Admin opérationnels.")
+        status, slots_payload = request_json(base_url, "/api/admin/planning", token=admin_token)
+        saved_slot = next((item for item in slots_payload.get("slots", []) if item.get("id") == sprint_slot_id), None)
+        assert status == 200 and saved_slot and saved_slot.get("reservedBy") == temporary_code, "La réservation n’apparaît pas dans l’Admin."
+
+        print(f"Parcours vérifié : profil, questionnaire, planning, réservation et Admin opérationnels.")
     finally:
         with psycopg.connect(database_url) as connection:
+            if sprint_slot_id:
+                connection.execute("DELETE FROM sprint_slots WHERE id = %s", (sprint_slot_id,))
             if submission_id:
                 connection.execute("DELETE FROM submissions WHERE id = %s", (submission_id,))
             if generated_code:

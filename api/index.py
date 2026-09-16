@@ -10,6 +10,7 @@ import os
 import re
 import secrets
 import time
+from datetime import date, timedelta
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
@@ -23,6 +24,7 @@ ID_PATTERN = re.compile(r"^[a-zA-Z0-9_-]{1,80}$")
 NEW_ACCESS_CODE_PATTERN = re.compile(r"^[A-Z]{1,6}$")
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 PHONE_PATTERN = re.compile(r"^[0-9+().\s-]{6,30}$")
+DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 ACCESS_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ"
 MAX_BODY_SIZE = 2_000_000
 
@@ -115,6 +117,21 @@ def verify_admin_token(token: str) -> bool:
         return False
 
 
+def parse_iso_date(value) -> date | None:
+    if not isinstance(value, str) or not DATE_PATTERN.fullmatch(value):
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def ranges_overlap(first_start: date, second_start: date) -> bool:
+    first_end = first_start + timedelta(days=4)
+    second_end = second_start + timedelta(days=4)
+    return first_start <= second_end and first_end >= second_start
+
+
 class handler(BaseHTTPRequestHandler):
     """Point d’entrée unique vers lequel les routes API sont réécrites."""
 
@@ -136,12 +153,16 @@ class handler(BaseHTTPRequestHandler):
                 self.get_profile()
             elif route == "draft":
                 self.get_draft()
+            elif route == "planning":
+                self.get_planning()
             elif route == "admin-responses":
                 self.get_admin_responses()
             elif route == "admin-codes":
                 self.get_admin_codes()
             elif route == "admin-questions":
                 self.get_admin_questions()
+            elif route == "admin-planning":
+                self.get_admin_planning()
             else:
                 self.send_json({"message": "Route introuvable."}, HTTPStatus.NOT_FOUND)
         except Exception as error:  # La réponse reste neutre, le détail part dans les logs Vercel.
@@ -162,6 +183,10 @@ class handler(BaseHTTPRequestHandler):
                 self.save_draft()
             elif route == "submissions":
                 self.save_submission()
+            elif route == "planning-reserve":
+                self.reserve_planning_slot()
+            elif route == "admin-planning":
+                self.create_admin_planning_slot()
             else:
                 self.send_json({"message": "Route introuvable."}, HTTPStatus.NOT_FOUND)
         except Exception as error:  # La réponse reste neutre, le détail part dans les logs Vercel.
@@ -171,6 +196,17 @@ class handler(BaseHTTPRequestHandler):
         try:
             if self.requested_route() == "admin-codes":
                 self.update_admin_code()
+            elif self.requested_route() == "admin-planning":
+                self.update_admin_planning_slot()
+            else:
+                self.send_json({"message": "Route introuvable."}, HTTPStatus.NOT_FOUND)
+        except Exception as error:
+            self.handle_server_error(error)
+
+    def do_DELETE(self):
+        try:
+            if self.requested_route() == "admin-planning":
+                self.delete_admin_planning_slot()
             else:
                 self.send_json({"message": "Route introuvable."}, HTTPStatus.NOT_FOUND)
         except Exception as error:
@@ -248,9 +284,12 @@ class handler(BaseHTTPRequestHandler):
                 SELECT submissions.id, submissions.submitted_at, submissions.access_code,
                        submissions.questions, submissions.answers,
                        participants.first_name, participants.last_name,
-                       participants.phone, participants.email
+                       participants.phone, participants.email,
+                       sprint_slots.id AS sprint_slot_id,
+                       sprint_slots.start_date AS sprint_start_date
                 FROM submissions
                 LEFT JOIN participants ON participants.access_code = submissions.access_code
+                LEFT JOIN sprint_slots ON sprint_slots.access_code = submissions.access_code
                 ORDER BY submissions.submitted_at DESC
                 """
             ).fetchall()
@@ -267,6 +306,11 @@ class handler(BaseHTTPRequestHandler):
                 "phone": row["phone"],
                 "email": row["email"],
             } if row["first_name"] is not None else None,
+            "sprint": {
+                "id": row["sprint_slot_id"],
+                "startDate": row["sprint_start_date"].isoformat(),
+                "endDate": (row["sprint_start_date"] + timedelta(days=4)).isoformat(),
+            } if row["sprint_slot_id"] is not None else None,
         } for row in rows]
         self.send_json({"submissions": submissions, "count": len(submissions)})
 
@@ -510,6 +554,242 @@ class handler(BaseHTTPRequestHandler):
             self.send_json({"message": "Ce code est introuvable."}, HTTPStatus.NOT_FOUND)
             return
         self.send_json({"updated": True, "code": row["code"], "active": row["active"]})
+
+    def planning_rows(self, connection):
+        return connection.execute(
+            """
+            SELECT sprint_slots.id, sprint_slots.start_date, sprint_slots.taken,
+                   sprint_slots.access_code, participants.first_name, participants.last_name
+            FROM sprint_slots
+            LEFT JOIN participants ON participants.access_code = sprint_slots.access_code
+            ORDER BY sprint_slots.start_date ASC, sprint_slots.id ASC
+            """
+        ).fetchall()
+
+    def serialize_planning_slot(self, row, include_identity=False, current_code=None):
+        payload = {
+            "id": row["id"],
+            "startDate": row["start_date"].isoformat(),
+            "endDate": (row["start_date"] + timedelta(days=4)).isoformat(),
+            "taken": row["taken"],
+            "mine": bool(current_code and row["access_code"] == current_code),
+        }
+        if include_identity:
+            participant_name = " ".join(
+                value for value in (row["first_name"], row["last_name"]) if value
+            )
+            payload["reservedBy"] = row["access_code"]
+            payload["participantName"] = participant_name or None
+        return payload
+
+    def get_planning(self):
+        code = self.authenticated_code()
+        if not code:
+            self.send_json({"message": "Ta session a expiré."}, HTTPStatus.UNAUTHORIZED)
+            return
+
+        with database_connection() as connection:
+            submitted = connection.execute(
+                "SELECT EXISTS (SELECT 1 FROM submissions WHERE access_code = %s) AS complete",
+                (code,),
+            ).fetchone()["complete"]
+            if not submitted:
+                self.send_json({"message": "Complète d’abord le questionnaire."}, HTTPStatus.FORBIDDEN)
+                return
+            rows = self.planning_rows(connection)
+        slots = [self.serialize_planning_slot(row, current_code=code) for row in rows]
+        reservation = next((slot for slot in slots if slot["mine"]), None)
+        self.send_json({"slots": slots, "reservation": reservation})
+
+    def reserve_planning_slot(self):
+        code = self.authenticated_code()
+        if not code:
+            self.send_json({"message": "Ta session a expiré."}, HTTPStatus.UNAUTHORIZED)
+            return
+
+        body = self.read_body()
+        slot_id = body.get("slotId") if isinstance(body, dict) else None
+        start_date = parse_iso_date(body.get("startDate")) if isinstance(body, dict) else None
+        if not isinstance(slot_id, int) or not start_date:
+            self.send_json({"message": "La période sélectionnée est invalide."}, HTTPStatus.BAD_REQUEST)
+            return
+
+        with database_connection() as connection:
+            connection.execute("LOCK TABLE sprint_slots IN SHARE ROW EXCLUSIVE MODE")
+            submitted = connection.execute(
+                "SELECT EXISTS (SELECT 1 FROM submissions WHERE access_code = %s) AS complete",
+                (code,),
+            ).fetchone()["complete"]
+            if not submitted:
+                self.send_json({"message": "Complète d’abord le questionnaire."}, HTTPStatus.FORBIDDEN)
+                return
+
+            existing = connection.execute(
+                "SELECT id, start_date, taken, access_code FROM sprint_slots WHERE access_code = %s",
+                (code,),
+            ).fetchone()
+            if existing:
+                self.send_json({
+                    "reserved": True,
+                    "alreadyReserved": True,
+                    "slot": {
+                        "id": existing["id"],
+                        "startDate": existing["start_date"].isoformat(),
+                        "endDate": (existing["start_date"] + timedelta(days=4)).isoformat(),
+                        "taken": True,
+                        "mine": True,
+                    },
+                })
+                return
+
+            chosen = connection.execute(
+                "SELECT id, start_date, taken, access_code FROM sprint_slots WHERE id = %s FOR UPDATE",
+                (slot_id,),
+            ).fetchone()
+            if not chosen:
+                self.send_json({"message": "Cette période n’existe plus."}, HTTPStatus.NOT_FOUND)
+                return
+            if chosen["taken"]:
+                self.send_json({"message": "Cette période vient d’être réservée. Choisis-en une autre."}, HTTPStatus.CONFLICT)
+                return
+
+            other_rows = connection.execute(
+                "SELECT id, start_date FROM sprint_slots WHERE id <> %s",
+                (slot_id,),
+            ).fetchall()
+            if any(ranges_overlap(start_date, row["start_date"]) for row in other_rows):
+                self.send_json({"message": "Cette période chevauche déjà un autre sprint."}, HTTPStatus.CONFLICT)
+                return
+
+            row = connection.execute(
+                """
+                UPDATE sprint_slots
+                SET start_date = %s, taken = TRUE, access_code = %s, updated_at = NOW()
+                WHERE id = %s
+                RETURNING id, start_date, taken
+                """,
+                (start_date, code, slot_id),
+            ).fetchone()
+
+        self.send_json({
+            "reserved": True,
+            "slot": {
+                "id": row["id"],
+                "startDate": row["start_date"].isoformat(),
+                "endDate": (row["start_date"] + timedelta(days=4)).isoformat(),
+                "taken": True,
+                "mine": True,
+            },
+        }, HTTPStatus.CREATED)
+
+    def get_admin_planning(self):
+        if not self.authenticated_admin():
+            self.send_json({"message": "Session administrateur invalide ou expirée."}, HTTPStatus.UNAUTHORIZED)
+            return
+        with database_connection() as connection:
+            rows = self.planning_rows(connection)
+        slots = [self.serialize_planning_slot(row, include_identity=True) for row in rows]
+        self.send_json({"slots": slots, "count": len(slots)})
+
+    def create_admin_planning_slot(self):
+        if not self.authenticated_admin():
+            self.send_json({"message": "Session administrateur invalide ou expirée."}, HTTPStatus.UNAUTHORIZED)
+            return
+        body = self.read_body()
+        start_date = parse_iso_date(body.get("startDate")) if isinstance(body, dict) else None
+        if not start_date:
+            self.send_json({"message": "Choisis une date de début valide."}, HTTPStatus.BAD_REQUEST)
+            return
+
+        with database_connection() as connection:
+            connection.execute("LOCK TABLE sprint_slots IN SHARE ROW EXCLUSIVE MODE")
+            rows = connection.execute("SELECT start_date FROM sprint_slots").fetchall()
+            if any(ranges_overlap(start_date, row["start_date"]) for row in rows):
+                self.send_json({"message": "Cette période chevauche déjà un sprint."}, HTTPStatus.CONFLICT)
+                return
+            row = connection.execute(
+                """
+                INSERT INTO sprint_slots (start_date, taken)
+                VALUES (%s, FALSE)
+                RETURNING id, start_date, taken
+                """,
+                (start_date,),
+            ).fetchone()
+        self.send_json({
+            "created": True,
+            "slot": {
+                "id": row["id"], "startDate": row["start_date"].isoformat(),
+                "endDate": (row["start_date"] + timedelta(days=4)).isoformat(), "taken": row["taken"],
+                "reservedBy": None, "participantName": None,
+            },
+        }, HTTPStatus.CREATED)
+
+    def update_admin_planning_slot(self):
+        if not self.authenticated_admin():
+            self.send_json({"message": "Session administrateur invalide ou expirée."}, HTTPStatus.UNAUTHORIZED)
+            return
+        body = self.read_body()
+        slot_id = body.get("id") if isinstance(body, dict) else None
+        if not isinstance(slot_id, int):
+            self.send_json({"message": "Le créneau est invalide."}, HTTPStatus.BAD_REQUEST)
+            return
+
+        has_start_date = "startDate" in body
+        start_date = parse_iso_date(body.get("startDate")) if has_start_date else None
+        taken = body.get("taken") if "taken" in body else None
+        if (has_start_date and not start_date) or (taken is not None and not isinstance(taken, bool)):
+            self.send_json({"message": "La modification demandée est invalide."}, HTTPStatus.BAD_REQUEST)
+            return
+
+        with database_connection() as connection:
+            connection.execute("LOCK TABLE sprint_slots IN SHARE ROW EXCLUSIVE MODE")
+            current = connection.execute(
+                "SELECT id, start_date, taken, access_code FROM sprint_slots WHERE id = %s FOR UPDATE",
+                (slot_id,),
+            ).fetchone()
+            if not current:
+                self.send_json({"message": "Ce créneau est introuvable."}, HTTPStatus.NOT_FOUND)
+                return
+            next_start = start_date or current["start_date"]
+            rows = connection.execute("SELECT id, start_date FROM sprint_slots WHERE id <> %s", (slot_id,)).fetchall()
+            if any(ranges_overlap(next_start, row["start_date"]) for row in rows):
+                self.send_json({"message": "Cette période chevauche déjà un sprint."}, HTTPStatus.CONFLICT)
+                return
+            next_taken = current["taken"] if taken is None else taken
+            next_code = current["access_code"] if next_taken else None
+            connection.execute(
+                """
+                UPDATE sprint_slots
+                SET start_date = %s, taken = %s, access_code = %s, updated_at = NOW()
+                WHERE id = %s
+                """,
+                (next_start, next_taken, next_code, slot_id),
+            )
+            row = next(item for item in self.planning_rows(connection) if item["id"] == slot_id)
+        self.send_json({"updated": True, "slot": self.serialize_planning_slot(row, include_identity=True)})
+
+    def delete_admin_planning_slot(self):
+        if not self.authenticated_admin():
+            self.send_json({"message": "Session administrateur invalide ou expirée."}, HTTPStatus.UNAUTHORIZED)
+            return
+        body = self.read_body()
+        slot_id = body.get("id") if isinstance(body, dict) else None
+        if not isinstance(slot_id, int):
+            self.send_json({"message": "Le créneau est invalide."}, HTTPStatus.BAD_REQUEST)
+            return
+        with database_connection() as connection:
+            row = connection.execute(
+                "SELECT access_code FROM sprint_slots WHERE id = %s",
+                (slot_id,),
+            ).fetchone()
+            if not row:
+                self.send_json({"message": "Ce créneau est introuvable."}, HTTPStatus.NOT_FOUND)
+                return
+            if row["access_code"]:
+                self.send_json({"message": "Libère d’abord la réservation avant de supprimer ce créneau."}, HTTPStatus.CONFLICT)
+                return
+            connection.execute("DELETE FROM sprint_slots WHERE id = %s", (slot_id,))
+        self.send_json({"deleted": True, "id": slot_id})
 
     def get_draft(self):
         code = self.authenticated_code()

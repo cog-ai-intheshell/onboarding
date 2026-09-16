@@ -12,10 +12,13 @@
     { "source": "/api/profile", "destination": "/api/index?route=profile" },
     { "source": "/api/draft", "destination": "/api/index?route=draft" },
     { "source": "/api/submissions", "destination": "/api/index?route=submissions" },
+    { "source": "/api/planning", "destination": "/api/index?route=planning" },
+    { "source": "/api/planning/reserve", "destination": "/api/index?route=planning-reserve" },
     { "source": "/api/admin/login", "destination": "/api/index?route=admin-login" },
     { "source": "/api/admin/responses", "destination": "/api/index?route=admin-responses" },
     { "source": "/api/admin/codes", "destination": "/api/index?route=admin-codes" },
-    { "source": "/api/admin/questions", "destination": "/api/index?route=admin-questions" }
+    { "source": "/api/admin/questions", "destination": "/api/index?route=admin-questions" },
+    { "source": "/api/admin/planning", "destination": "/api/index?route=admin-planning" }
   ],
   "headers": [
     {

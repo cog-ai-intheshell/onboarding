@@ -4,6 +4,10 @@ const adminState = {
   codes: [],
   questions: [],
   questionsDirty: false,
+  planningSlots: [],
+  planningMonth: new Date(Date.UTC(2026, 9, 1)),
+  planningDrag: null,
+  planningJustDragged: false,
 };
 
 const adminElements = {
@@ -32,6 +36,14 @@ const adminElements = {
   addQuestion: document.querySelector("#add-question"),
   saveQuestions: document.querySelector("#save-questions"),
   questionFeedback: document.querySelector("#question-feedback"),
+  planningCalendar: document.querySelector("#admin-planning-calendar"),
+  planningMonth: document.querySelector("#admin-planning-month"),
+  planningForm: document.querySelector("#admin-planning-form"),
+  planningDate: document.querySelector("#admin-planning-date"),
+  planningFeedback: document.querySelector("#admin-planning-feedback"),
+  planningTotal: document.querySelector("#planning-total"),
+  planningOpen: document.querySelector("#planning-open"),
+  planningTaken: document.querySelector("#planning-taken"),
 };
 
 adminElements.loginForm.addEventListener("submit", async (event) => {
@@ -75,6 +87,7 @@ adminElements.logout.addEventListener("click", () => {
   adminState.codes = [];
   adminState.questions = [];
   adminState.questionsDirty = false;
+  adminState.planningSlots = [];
   adminElements.dashboard.hidden = true;
   adminElements.login.hidden = false;
   adminElements.loginForm.reset();
@@ -96,6 +109,17 @@ adminElements.codeForm.addEventListener("submit", async (event) => {
 adminElements.generateCode.addEventListener("click", () => createCode(true));
 adminElements.addQuestion.addEventListener("click", addQuestion);
 adminElements.saveQuestions.addEventListener("click", saveQuestions);
+adminElements.planningForm.addEventListener("submit", createPlanningSlot);
+document.querySelectorAll("[data-admin-month-shift]").forEach((button) => {
+  button.addEventListener("click", () => {
+    adminState.planningMonth = new Date(Date.UTC(
+      adminState.planningMonth.getUTCFullYear(),
+      adminState.planningMonth.getUTCMonth() + Number(button.dataset.adminMonthShift),
+      1,
+    ));
+    renderAdminPlanning();
+  });
+});
 
 window.addEventListener("beforeunload", (event) => {
   if (!adminState.questionsDirty) return;
@@ -109,7 +133,7 @@ async function showDashboard() {
   adminElements.empty.hidden = true;
 
   try {
-    await Promise.all([loadSubmissions(), loadCodes(), loadQuestionsEditor()]);
+    await Promise.all([loadSubmissions(), loadCodes(), loadQuestionsEditor(), loadAdminPlanning()]);
   } catch (error) {
     if (error.message === "SESSION_EXPIRED") return;
     adminElements.loading.textContent = error.message === "Failed to fetch" ? "Le serveur ne répond pas." : error.message;
@@ -376,6 +400,234 @@ function setCodeFeedback(message, error = false, success = false) {
   adminElements.codeFeedback.classList.toggle("is-success", success);
 }
 
+async function loadAdminPlanning() {
+  const data = await adminFetch("/api/admin/planning");
+  adminState.planningSlots = Array.isArray(data.slots) ? data.slots : [];
+  if (adminState.planningSlots.length) {
+    adminState.planningMonth = adminMonthStart(adminDate(adminState.planningSlots[0].startDate));
+  }
+  renderAdminPlanning();
+}
+
+function renderAdminPlanning() {
+  const slots = adminState.planningSlots;
+  const takenCount = slots.filter((slot) => slot.taken).length;
+  adminElements.planningTotal.textContent = slots.length;
+  adminElements.planningOpen.textContent = slots.length - takenCount;
+  adminElements.planningTaken.textContent = takenCount;
+  adminElements.planningMonth.textContent = new Intl.DateTimeFormat("fr-FR", {
+    month: "long", year: "numeric", timeZone: "UTC",
+  }).format(adminState.planningMonth);
+  adminElements.planningCalendar.replaceChildren();
+
+  const first = adminMonthStart(adminState.planningMonth);
+  const gridStart = adminAddDays(first, -((first.getUTCDay() + 6) % 7));
+  const visibleMonth = first.getUTCMonth();
+  for (let index = 0; index < 42; index += 1) {
+    const date = adminAddDays(gridStart, index);
+    const slot = adminSlotForDate(date);
+    const day = document.createElement("button");
+    day.type = "button";
+    day.className = "sprint-day";
+    day.dataset.date = adminISO(date);
+    if (date.getUTCMonth() !== visibleMonth) day.classList.add("is-outside");
+
+    let rangeContent = "";
+    if (slot) {
+      const offset = Math.round((date - adminDate(slot.startDate)) / 86400000);
+      decorateAdminRange(day, offset, date);
+      day.dataset.slotId = String(slot.id);
+      day.classList.add(slot.taken ? "is-taken" : "is-open");
+      const label = slot.taken
+        ? (slot.participantName || slot.reservedBy || "Déjà pris")
+        : `Session ${String(slot.id).padStart(2, "0")}`;
+      rangeContent = `<span>${escapeAdminHtml(label)}</span>`;
+      day.setAttribute("aria-label", `${adminLongRange(slot.startDate)} — ${slot.taken ? "déjà pris" : "disponible"}`);
+      day.draggable = true;
+      day.addEventListener("dragstart", (event) => startAdminPlanningDrag(event, slot, offset, day));
+      day.addEventListener("dragend", endAdminPlanningDrag);
+      day.addEventListener("click", () => {
+        if (!adminState.planningJustDragged) togglePlanningSlot(slot);
+      });
+    } else {
+      day.classList.add("is-empty");
+    }
+    day.addEventListener("dragover", (event) => {
+      if (!adminState.planningDrag) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      previewAdminPlanningDrag(date);
+    });
+    day.addEventListener("drop", (event) => {
+      event.preventDefault();
+      moveAdminPlanningSlot(date);
+    });
+    day.innerHTML = `<span class="sprint-day__number">${date.getUTCDate()}</span>${slot ? `<span class="sprint-day__range">${rangeContent}</span>` : ""}`;
+    adminElements.planningCalendar.appendChild(day);
+  }
+}
+
+function startAdminPlanningDrag(event, slot, offset, day) {
+  adminState.planningDrag = { slotId: slot.id, offset };
+  day.classList.add("is-dragging");
+  adminElements.planningCalendar.querySelectorAll(`[data-slot-id="${slot.id}"]`).forEach((cell) => cell.classList.add("is-drag-origin"));
+  event.dataTransfer.effectAllowed = "move";
+  event.dataTransfer.setData("text/plain", String(slot.id));
+}
+
+function previewAdminPlanningDrag(targetDate) {
+  const newStart = adminAddDays(targetDate, -adminState.planningDrag.offset);
+  const invalid = adminPlanningOverlaps(adminState.planningDrag.slotId, newStart);
+  clearAdminPlanningPreview();
+  adminElements.planningCalendar.querySelectorAll(".sprint-day[data-date]").forEach((cell) => {
+    const cellDate = adminDate(cell.dataset.date);
+    if (cellDate < newStart || cellDate > adminAddDays(newStart, 4)) return;
+    const offset = Math.round((cellDate - newStart) / 86400000);
+    cell.classList.add("is-drag-preview");
+    if (offset === 0 || cellDate.getUTCDay() === 1) cell.classList.add("is-preview-segment-start");
+    if (offset === 4 || cellDate.getUTCDay() === 0) cell.classList.add("is-preview-segment-end");
+    if (offset === 0) cell.classList.add("is-preview-start");
+    if (offset === 4) cell.classList.add("is-preview-end");
+    if (invalid) cell.classList.add("is-preview-invalid");
+  });
+  setPlanningFeedback(`${invalid ? "Chevauchement impossible" : "Aperçu"} · ${adminLongRange(adminISO(newStart))}`, invalid);
+}
+
+async function moveAdminPlanningSlot(targetDate) {
+  if (!adminState.planningDrag) return;
+  const { slotId, offset } = adminState.planningDrag;
+  const newStart = adminAddDays(targetDate, -offset);
+  if (adminPlanningOverlaps(slotId, newStart)) {
+    setPlanningFeedback("Cette période chevauche déjà un autre sprint.", true);
+    endAdminPlanningDrag();
+    return;
+  }
+  endAdminPlanningDrag();
+  try {
+    const data = await adminFetch("/api/admin/planning", {
+      method: "PATCH",
+      body: JSON.stringify({ id: slotId, startDate: adminISO(newStart) }),
+    });
+    const index = adminState.planningSlots.findIndex((slot) => slot.id === slotId);
+    adminState.planningSlots[index] = data.slot;
+    adminState.planningMonth = adminMonthStart(newStart);
+    renderAdminPlanning();
+    setPlanningFeedback(`Période déplacée · ${adminLongRange(data.slot.startDate)}`, false, true);
+  } catch (error) {
+    if (error.message !== "SESSION_EXPIRED") setPlanningFeedback(error.message, true);
+    await reloadPlanningQuietly();
+  }
+}
+
+function endAdminPlanningDrag() {
+  if (!adminState.planningDrag) return;
+  adminElements.planningCalendar.querySelectorAll(".is-dragging, .is-drag-origin").forEach((cell) => cell.classList.remove("is-dragging", "is-drag-origin"));
+  clearAdminPlanningPreview();
+  adminState.planningDrag = null;
+  adminState.planningJustDragged = true;
+  window.setTimeout(() => { adminState.planningJustDragged = false; }, 180);
+}
+
+function clearAdminPlanningPreview() {
+  adminElements.planningCalendar.querySelectorAll(".is-drag-preview, .is-preview-segment-start, .is-preview-segment-end, .is-preview-start, .is-preview-end, .is-preview-invalid")
+    .forEach((cell) => cell.classList.remove("is-drag-preview", "is-preview-segment-start", "is-preview-segment-end", "is-preview-start", "is-preview-end", "is-preview-invalid"));
+}
+
+async function togglePlanningSlot(slot) {
+  if (slot.reservedBy && slot.taken) {
+    const identity = slot.participantName || slot.reservedBy;
+    if (!window.confirm(`Libérer la réservation de ${identity} ?`)) return;
+  }
+  setPlanningFeedback("Mise à jour du statut…");
+  try {
+    const data = await adminFetch("/api/admin/planning", {
+      method: "PATCH",
+      body: JSON.stringify({ id: slot.id, taken: !slot.taken }),
+    });
+    const index = adminState.planningSlots.findIndex((item) => item.id === slot.id);
+    adminState.planningSlots[index] = data.slot;
+    renderAdminPlanning();
+    setPlanningFeedback(data.slot.taken ? "La période est marquée comme déjà prise." : "La période est à nouveau disponible.", false, true);
+    await loadSubmissions();
+  } catch (error) {
+    if (error.message !== "SESSION_EXPIRED") setPlanningFeedback(error.message, true);
+  }
+}
+
+async function createPlanningSlot(event) {
+  event.preventDefault();
+  const startDate = adminElements.planningDate.value;
+  if (!startDate) {
+    setPlanningFeedback("Choisis le premier jour du sprint.", true);
+    return;
+  }
+  const button = adminElements.planningForm.querySelector("button");
+  button.disabled = true;
+  setPlanningFeedback("Ajout de la période…");
+  try {
+    const data = await adminFetch("/api/admin/planning", {
+      method: "POST",
+      body: JSON.stringify({ startDate }),
+    });
+    adminState.planningSlots.push(data.slot);
+    adminState.planningSlots.sort((a, b) => a.startDate.localeCompare(b.startDate));
+    adminState.planningMonth = adminMonthStart(adminDate(startDate));
+    adminElements.planningForm.reset();
+    renderAdminPlanning();
+    setPlanningFeedback(`Période ajoutée · ${adminLongRange(startDate)}`, false, true);
+  } catch (error) {
+    if (error.message !== "SESSION_EXPIRED") setPlanningFeedback(error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function reloadPlanningQuietly() {
+  try { await loadAdminPlanning(); } catch { /* Le prochain chargement réessaiera. */ }
+}
+
+function setPlanningFeedback(message, error = false, success = false) {
+  adminElements.planningFeedback.textContent = message;
+  adminElements.planningFeedback.classList.toggle("is-error", error);
+  adminElements.planningFeedback.classList.toggle("is-success", success);
+}
+
+function adminPlanningOverlaps(slotId, start) {
+  const end = adminAddDays(start, 4);
+  return adminState.planningSlots.some((slot) => {
+    if (slot.id === slotId) return false;
+    const otherStart = adminDate(slot.startDate);
+    const otherEnd = adminAddDays(otherStart, 4);
+    return start <= otherEnd && end >= otherStart;
+  });
+}
+
+function adminSlotForDate(value) {
+  const iso = adminISO(value);
+  return adminState.planningSlots.find((slot) => iso >= slot.startDate && iso <= adminISO(adminAddDays(adminDate(slot.startDate), 4)));
+}
+
+function decorateAdminRange(day, offset, value) {
+  const starts = offset === 0 || value.getUTCDay() === 1;
+  const ends = offset === 4 || value.getUTCDay() === 0;
+  day.classList.add(starts ? "is-range-start" : ends ? "is-range-end" : "is-range-middle");
+  if (starts && ends) day.classList.add("is-range-end");
+  if (offset === 0) day.classList.add("is-sprint-start");
+  if (offset === 4) day.classList.add("is-sprint-end");
+}
+
+function adminDate(value) { return new Date(`${value}T00:00:00Z`); }
+function adminISO(value) { return value.toISOString().slice(0, 10); }
+function adminAddDays(value, amount) { const result = new Date(value); result.setUTCDate(result.getUTCDate() + amount); return result; }
+function adminMonthStart(value) { return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), 1)); }
+function adminLongRange(startValue) {
+  const start = adminDate(startValue);
+  const end = adminAddDays(start, 4);
+  const first = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(start);
+  const last = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(end);
+  return `Du ${first} au ${last}`;
+}
+
 function renderSubmissions(query = "") {
   const normalizedQuery = query.trim().toLowerCase();
   const filtered = adminState.submissions.filter((submission) => {
@@ -422,6 +674,7 @@ function createSubmission(submission) {
     <div><small>Téléphone</small><a href="${participant.phone ? `tel:${escapeAdminHtml(participant.phone)}` : "#"}">${escapeAdminHtml(participant.phone || "—")}</a></div>
     <div><small>Email</small><a href="${participant.email ? `mailto:${escapeAdminHtml(participant.email)}` : "#"}">${escapeAdminHtml(participant.email || "—")}</a></div>
     <div><small>ID de réponse</small><strong>${escapeAdminHtml(submission.id || "—")}</strong></div>
+    <div><small>Période du sprint</small><strong>${submission.sprint ? escapeAdminHtml(adminLongRange(submission.sprint.startDate)) : "Non réservée"}</strong></div>
   `;
   answersContainer.appendChild(participantElement);
   const titles = new Map((submission.questions || []).map((question) => [question.id, question.title]));

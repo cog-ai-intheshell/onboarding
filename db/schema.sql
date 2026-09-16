@@ -45,3 +45,16 @@ CREATE INDEX IF NOT EXISTS submissions_submitted_at_idx
 
 CREATE INDEX IF NOT EXISTS submissions_access_code_idx
   ON submissions (access_code);
+
+CREATE TABLE IF NOT EXISTS sprint_slots (
+  id BIGSERIAL PRIMARY KEY,
+  start_date DATE NOT NULL,
+  taken BOOLEAN NOT NULL DEFAULT FALSE,
+  access_code TEXT UNIQUE REFERENCES access_codes(code) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT sprint_slots_reservation_state CHECK (access_code IS NULL OR taken = TRUE)
+);
+
+CREATE INDEX IF NOT EXISTS sprint_slots_start_date_idx
+  ON sprint_slots (start_date);
