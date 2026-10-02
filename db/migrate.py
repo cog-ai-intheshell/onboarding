@@ -58,7 +58,6 @@ def main() -> None:
     submissions = read_json("responses.json", [])
     question_data = read_json("questions.json", {"questions": []})
     questions = question_data.get("questions", []) if isinstance(question_data, dict) else []
-    experience_content = read_json("experience.json", {})
     codes = normalized_codes()
 
     if isinstance(drafts, dict):
@@ -107,16 +106,6 @@ def main() -> None:
                        ('2026-10-18', FALSE),
                        ('2026-10-26', TRUE)
                 """
-            )
-
-        if isinstance(experience_content, dict) and experience_content:
-            connection.execute(
-                """
-                INSERT INTO site_content (key, content)
-                VALUES ('experience_page', %s)
-                ON CONFLICT (key) DO NOTHING
-                """,
-                (Jsonb(experience_content),),
             )
 
         for code in sorted(codes):

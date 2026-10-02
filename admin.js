@@ -8,8 +8,6 @@ const adminState = {
   planningMonth: new Date(Date.UTC(2026, 9, 1)),
   planningDrag: null,
   planningJustDragged: false,
-  experienceContent: null,
-  experienceDirty: false,
 };
 
 const adminElements = {
@@ -47,12 +45,6 @@ const adminElements = {
   planningTotal: document.querySelector("#planning-total"),
   planningOpen: document.querySelector("#planning-open"),
   planningTaken: document.querySelector("#planning-taken"),
-  experienceLabel: document.querySelector("#experience-label"),
-  experienceIntro: document.querySelector("#experience-intro"),
-  experienceSectionList: document.querySelector("#experience-section-list"),
-  experienceFooter: document.querySelector("#experience-footer"),
-  saveExperience: document.querySelector("#save-experience"),
-  experienceFeedback: document.querySelector("#experience-feedback"),
 };
 
 adminElements.loginForm.addEventListener("submit", async (event) => {
@@ -97,8 +89,6 @@ adminElements.logout.addEventListener("click", () => {
   adminState.questions = [];
   adminState.questionsDirty = false;
   adminState.planningSlots = [];
-  adminState.experienceContent = null;
-  adminState.experienceDirty = false;
   adminElements.dashboard.hidden = true;
   adminElements.login.hidden = false;
   adminElements.loginForm.reset();
@@ -120,7 +110,6 @@ adminElements.codeForm.addEventListener("submit", async (event) => {
 adminElements.generateCode.addEventListener("click", () => createCode(true));
 adminElements.addQuestion.addEventListener("click", addQuestion);
 adminElements.saveQuestions.addEventListener("click", saveQuestions);
-adminElements.saveExperience.addEventListener("click", saveExperienceContent);
 adminElements.planningForm.addEventListener("submit", createPlanningSlot);
 document.querySelectorAll("[data-admin-month-shift]").forEach((button) => {
   button.addEventListener("click", () => {
@@ -134,7 +123,7 @@ document.querySelectorAll("[data-admin-month-shift]").forEach((button) => {
 });
 
 window.addEventListener("beforeunload", (event) => {
-  if (!adminState.questionsDirty && !adminState.experienceDirty) return;
+  if (!adminState.questionsDirty) return;
   event.preventDefault();
 });
 
@@ -145,7 +134,7 @@ async function showDashboard() {
   adminElements.empty.hidden = true;
 
   try {
-    await Promise.all([loadSubmissions(), loadCodes(), loadQuestionsEditor(), loadAdminPlanning(), loadExperienceEditor()]);
+    await Promise.all([loadSubmissions(), loadCodes(), loadQuestionsEditor(), loadAdminPlanning()]);
   } catch (error) {
     if (error.message === "SESSION_EXPIRED") return;
     adminElements.loading.textContent = error.message === "Failed to fetch" ? "Le serveur ne répond pas." : error.message;
@@ -327,122 +316,6 @@ function setQuestionFeedback(message, error = false, success = false) {
   adminElements.questionFeedback.textContent = message;
   adminElements.questionFeedback.classList.toggle("is-error", error);
   adminElements.questionFeedback.classList.toggle("is-success", success);
-}
-
-async function loadExperienceEditor() {
-  const data = await adminFetch("/api/admin/experience-content");
-  adminState.experienceContent = data.content;
-  adminState.experienceDirty = false;
-  renderExperienceEditor();
-  setExperienceFeedback("");
-}
-
-function renderExperienceEditor() {
-  const content = adminState.experienceContent;
-  if (!content) return;
-  adminElements.experienceLabel.value = content.label || "";
-  adminElements.experienceIntro.value = (content.intro || []).join("\n\n");
-  adminElements.experienceFooter.value = content.footer || "";
-  adminElements.experienceSectionList.replaceChildren();
-
-  const updateRootField = (input, field, parser = (value) => value.trim()) => {
-    input.oninput = () => {
-      content[field] = parser(input.value);
-      markExperienceDirty();
-    };
-  };
-  updateRootField(adminElements.experienceLabel, "label");
-  updateRootField(adminElements.experienceIntro, "intro", splitExperienceParagraphs);
-  updateRootField(adminElements.experienceFooter, "footer");
-
-  content.sections.forEach((section, sectionIndex) => {
-    const editor = document.createElement("article");
-    editor.className = "admin-experience-section";
-    const typeLabel = section.type === "list" ? "Liste" : section.type === "outcomes" ? "Résultats" : "Texte";
-    editor.innerHTML = `
-      <div class="admin-experience-section__header"><span>Section ${sectionIndex + 1}</span><small>${typeLabel}</small></div>
-      <label>Titre<input type="text" data-field="title" maxlength="300" /></label>
-    `;
-    const title = editor.querySelector('[data-field="title"]');
-    title.value = section.title || "";
-    title.addEventListener("input", () => {
-      section.title = title.value.trim();
-      markExperienceDirty();
-    });
-
-    if (section.type === "text" || section.type === "list") {
-      const label = document.createElement("label");
-      label.textContent = section.type === "list" ? "Éléments — un par ligne" : "Paragraphes — séparés par une ligne vide";
-      const textarea = document.createElement("textarea");
-      textarea.rows = Math.max(5, section.type === "list" ? section.items.length + 1 : section.paragraphs.length * 3);
-      textarea.value = section.type === "list" ? section.items.join("\n") : section.paragraphs.join("\n\n");
-      textarea.addEventListener("input", () => {
-        if (section.type === "list") section.items = splitExperienceLines(textarea.value);
-        else section.paragraphs = splitExperienceParagraphs(textarea.value);
-        markExperienceDirty();
-      });
-      label.appendChild(textarea);
-      editor.appendChild(label);
-    } else {
-      const outcomes = document.createElement("div");
-      outcomes.className = "admin-outcome-list";
-      section.items.forEach((item, itemIndex) => {
-        const row = document.createElement("div");
-        row.className = "admin-outcome-editor";
-        row.innerHTML = `
-          <span>${String(itemIndex + 1).padStart(2, "0")}</span>
-          <label>Titre<input type="text" maxlength="300" /></label>
-          <label>Description<textarea rows="3"></textarea></label>
-        `;
-        const itemTitle = row.querySelector("input");
-        const itemText = row.querySelector("textarea");
-        itemTitle.value = item.title || "";
-        itemText.value = item.text || "";
-        itemTitle.addEventListener("input", () => { item.title = itemTitle.value.trim(); markExperienceDirty(); });
-        itemText.addEventListener("input", () => { item.text = itemText.value.trim(); markExperienceDirty(); });
-        outcomes.appendChild(row);
-      });
-      editor.appendChild(outcomes);
-    }
-    adminElements.experienceSectionList.appendChild(editor);
-  });
-}
-
-function splitExperienceParagraphs(value) {
-  return value.split(/\n\s*\n/).map((item) => item.trim()).filter(Boolean);
-}
-
-function splitExperienceLines(value) {
-  return value.split("\n").map((item) => item.trim()).filter(Boolean);
-}
-
-function markExperienceDirty() {
-  adminState.experienceDirty = true;
-  setExperienceFeedback("Modifications non publiées.");
-}
-
-async function saveExperienceContent() {
-  setAdminButtonLoading(adminElements.saveExperience, true, "Publication…", "Publier les modifications");
-  try {
-    const data = await adminFetch("/api/admin/experience-content", {
-      method: "PUT",
-      body: JSON.stringify({ content: adminState.experienceContent }),
-    });
-    adminState.experienceContent = data.content;
-    adminState.experienceDirty = false;
-    renderExperienceEditor();
-    setExperienceFeedback("La dernière page est publiée immédiatement.", false, true);
-  } catch (error) {
-    if (error.message !== "SESSION_EXPIRED") setExperienceFeedback(error.message, true);
-  } finally {
-    setAdminButtonLoading(adminElements.saveExperience, false, "Publication…", "Publier les modifications");
-  }
-}
-
-function setExperienceFeedback(message, error = false, success = false) {
-  adminElements.experienceFeedback.textContent = message;
-  adminElements.experienceFeedback.classList.toggle("is-error", error);
-  adminElements.experienceFeedback.classList.toggle("is-success", success);
 }
 
 async function createCode(generate) {

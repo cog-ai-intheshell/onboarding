@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Présentation du bootcamp NXT." />
+    <meta name="description" content="Confirmation de l’envoi de tes informations à l’équipe NXT." />
     <meta name="theme-color" content="#08090c" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <title>Le bootcamp — NXT</title>
+    <title>Informations reçues — NXT</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=22" />
+    <link rel="stylesheet" href="styles.css?v=23" />
   </head>
   <body class="text-page">
     <header class="site-header text-page__header">
@@ -18,14 +18,17 @@
         <span class="brand__symbol" aria-hidden="true"></span>
         <span>NXT</span>
       </a>
-      <span class="text-page__confidential">Présentation confidentielle</span>
+      <span class="text-page__confidential">Confirmation</span>
     </header>
 
-    <main class="text-page__content" id="experience-content">
-      <div class="loading-state experience-loading" id="experience-loading" aria-live="polite">
-        <span></span><p>Chargement de la présentation…</p>
-      </div>
+    <main class="confirmation-page" aria-labelledby="confirmation-title">
+      <section class="confirmation-message" role="status">
+        <span class="confirmation-message__icon" aria-hidden="true">✓</span>
+        <p class="text-page__label">Demande envoyée</p>
+        <h1 id="confirmation-title">Merci, tout est bien enregistré.</h1>
+        <p>Tes informations ont bien été prises en compte. Notre équipe reviendra très vite vers toi.</p>
+        <a class="button button--ghost" href="/"><span>Retour à l’accueil</span></a>
+      </section>
     </main>
-    <script src="experience.js?v=1" defer></script>
   </body>
 </html>

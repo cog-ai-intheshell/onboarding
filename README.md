@@ -12,7 +12,7 @@ Application d’onboarding en français déployable sur Vercel. Le frontend est 
 - Calendrier de réservation de sprints de cinq jours, déplaçables avant confirmation.
 - Espace administrateur protégé par un mot de passe fort.
 - Gestion des périodes disponibles ou déjà prises depuis l’Admin.
-- Modification et publication du texte de la page finale depuis l’Admin.
+- Confirmation de prise en compte affichée après la réservation.
 - Consultation et recherche des soumissions par identifiant ou code.
 - Déploiements automatiques Vercel depuis la branche `main`.
 
@@ -66,15 +66,13 @@ Le CLI indique l’adresse locale à ouvrir. L’accueil et l’administration s
 - `/`
 - `/admin.html`
 
-Après l’envoi du questionnaire, le participant est dirigé vers `/planning.html` afin de choisir ou déplacer une période de cinq jours avant de la réserver.
+Après l’envoi du questionnaire, le participant est dirigé vers `/planning.html` afin de choisir ou déplacer une période de cinq jours avant de la réserver. Une confirmation lui indique ensuite que ses informations ont bien été reçues.
 
 ## Modifier les questions
 
 Le moyen recommandé est d’ouvrir `/admin.html`, puis la section **Questions**. Elle permet de modifier les titres, explications et textes indicatifs, d’ajouter ou supprimer une question, de changer leur ordre et de choisir si une réponse est obligatoire. La sauvegarde publie immédiatement le nouveau questionnaire, sans redéploiement.
 
 Le fichier `questions.json` sert uniquement à initialiser une base vide lors de la première migration. Une fois la base initialisée, les questions de production résident dans Neon.
-
-Le fichier `experience.json` initialise de la même manière le contenu de la page finale. Après initialisation, ce contenu se modifie dans la section **Présentation du bootcamp** de l’Admin et se publie immédiatement.
 
 ```json
 {
@@ -122,7 +120,6 @@ Le schéma se trouve dans `db/schema.sql`. Il contient :
 - `drafts` pour les sauvegardes temporaires ;
 - `submissions` pour les réponses définitives.
 - `sprint_slots` pour les périodes proposées et les réservations associées aux codes participants.
-- `site_content` pour les textes éditoriaux modifiables depuis l’Admin.
 
 Pour créer ou mettre à jour les tables et importer les anciens fichiers JSON locaux :
 
@@ -134,12 +131,6 @@ Pour ajouter uniquement le planning sans lire ni importer les fichiers locaux de
 
 ```bash
 .venv/bin/python db/migrate_planning.py
-```
-
-Pour ajouter uniquement le contenu éditorial administrable :
-
-```bash
-.venv/bin/python db/migrate_content.py
 ```
 
 La migration est réexécutable : les codes sont mis à jour et les soumissions déjà présentes ne sont pas dupliquées.
@@ -181,12 +172,11 @@ Les variables `DATABASE_URL`, `NXT_ADMIN_PASSWORD` et `NXT_SERVER_SECRET` doiven
 | `profile.html` | Coordonnées du participant. |
 | `questionnaire.html` | Questionnaire scrollable. |
 | `planning.html` | Sélection et réservation du sprint. |
-| `experience.html` | Présentation après l’envoi. |
+| `experience.html` | Confirmation affichée après la réservation. |
 | `admin.html` | Administration. |
 | `styles.css` | Styles et tokens de couleur. |
 | `app.js` | Parcours participant. |
 | `planning.js` | Calendrier interactif du participant. |
-| `experience.js` | Chargement sécurisé du contenu de la page finale. |
 | `admin.js` | Consultation administrateur. |
 | `questions.json` | Questions et explications. |
 | `api/index.py` | API Python serverless. |

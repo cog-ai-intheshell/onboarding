@@ -58,9 +58,3 @@ CREATE TABLE IF NOT EXISTS sprint_slots (
 
 CREATE INDEX IF NOT EXISTS sprint_slots_start_date_idx
   ON sprint_slots (start_date);
-
-CREATE TABLE IF NOT EXISTS site_content (
-  key TEXT PRIMARY KEY,
-  content JSONB NOT NULL,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);

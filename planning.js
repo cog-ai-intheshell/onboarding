@@ -49,7 +49,7 @@ function initializePlanning() {
         state.reserved = true;
         summary.textContent = longRange(data.reservation.startDate);
         reserveButton.disabled = false;
-        reserveButton.querySelector("span:first-child").textContent = "Découvrir la suite";
+        reserveButton.querySelector("span:first-child").textContent = "Voir la confirmation";
       }
       render();
     } catch (error) {

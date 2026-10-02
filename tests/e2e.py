@@ -47,6 +47,11 @@ def request_json(base_url: str, path: str, method: str = "GET", payload=None, to
         return error.code, content
 
 
+def request_text(base_url: str, path: str):
+    with urlopen(f"{base_url}{path}", timeout=20) as response:
+        return response.status, response.read().decode("utf-8")
+
+
 def main() -> None:
     load_local_environment()
     base_url = os.environ.get("NXT_TEST_URL", "http://127.0.0.1:8767").rstrip("/")
@@ -135,26 +140,6 @@ def main() -> None:
         assert status == 200 and admin_payload.get("adminToken"), "La connexion Admin a échoué."
         admin_token = admin_payload["adminToken"]
 
-        status, experience_payload = request_json(
-            base_url,
-            "/api/admin/experience-content",
-            token=admin_token,
-        )
-        experience_content = experience_payload.get("content")
-        assert status == 200 and experience_content, "Le contenu de la dernière page n’est pas chargé dans l’Admin."
-
-        status, saved_experience_payload = request_json(
-            base_url,
-            "/api/admin/experience-content",
-            method="PUT",
-            payload={"content": experience_content},
-            token=admin_token,
-        )
-        assert status == 200 and saved_experience_payload.get("content") == experience_content, "La sauvegarde de la dernière page a échoué."
-
-        status, public_experience_payload = request_json(base_url, "/api/experience-content")
-        assert status == 200 and public_experience_payload.get("content") == experience_content, "La dernière page publiée est incorrecte."
-
         status, created_slot_payload = request_json(
             base_url,
             "/api/admin/planning",
@@ -177,6 +162,9 @@ def main() -> None:
             token=access_token,
         )
         assert status == 201 and reservation_payload.get("reserved"), "La réservation du sprint a échoué."
+
+        status, confirmation_html = request_text(base_url, "/experience.html")
+        assert status == 200 and "Tes informations ont bien été prises en compte." in confirmation_html, "La confirmation finale est indisponible."
 
         status, admin_questions_payload = request_json(
             base_url,
@@ -247,7 +235,7 @@ def main() -> None:
         released_slot = released_payload.get("slot", {})
         assert status == 200 and released_slot.get("taken") is False and not released_slot.get("reservedBy"), "La remise à disposition a échoué."
 
-        print(f"Parcours vérifié : profil, questionnaire, planning, réservation et Admin opérationnels.")
+        print("Parcours vérifié : profil, questionnaire, planning, réservation, confirmation et Admin opérationnels.")
     finally:
         with psycopg.connect(database_url) as connection:
             if sprint_slot_id:
