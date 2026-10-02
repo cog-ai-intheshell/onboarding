@@ -135,6 +135,26 @@ def main() -> None:
         assert status == 200 and admin_payload.get("adminToken"), "La connexion Admin a échoué."
         admin_token = admin_payload["adminToken"]
 
+        status, experience_payload = request_json(
+            base_url,
+            "/api/admin/experience-content",
+            token=admin_token,
+        )
+        experience_content = experience_payload.get("content")
+        assert status == 200 and experience_content, "Le contenu de la dernière page n’est pas chargé dans l’Admin."
+
+        status, saved_experience_payload = request_json(
+            base_url,
+            "/api/admin/experience-content",
+            method="PUT",
+            payload={"content": experience_content},
+            token=admin_token,
+        )
+        assert status == 200 and saved_experience_payload.get("content") == experience_content, "La sauvegarde de la dernière page a échoué."
+
+        status, public_experience_payload = request_json(base_url, "/api/experience-content")
+        assert status == 200 and public_experience_payload.get("content") == experience_content, "La dernière page publiée est incorrecte."
+
         status, created_slot_payload = request_json(
             base_url,
             "/api/admin/planning",

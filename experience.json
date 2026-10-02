@@ -1,0 +1,68 @@
+{
+  "label": "Présentation du bootcamp",
+  "intro": [
+    "Depuis plus de six ans, nous accompagnons des dirigeants et des entrepreneurs dans le développement de leurs projets.",
+    "Notre expérience nous a appris une chose : pour avancer, il faut comprendre ce que l’on veut construire, confronter ses idées au réel et savoir agir lorsque les conditions deviennent difficiles.",
+    "C’est pourquoi nous avons commencé, secrètement, il y a quelques années à créer ce bootcamp. Nous l’avons réservé uniquement aux profils que nous jugeons à haut potentiel."
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Nos critères d’acceptation",
+      "items": [
+        "Ton projet possède un fort potentiel.",
+        "Tu as une volonté rare et un mental capable d’encaisser.",
+        "Tu es prêt·e à réellement passer à l’action dès la fin du bootcamp."
+      ]
+    },
+    {
+      "type": "text",
+      "title": "Apprendre en profondeur, en peu de temps",
+      "paragraphs": [
+        "Nous nous inspirons de l’intensité de la semaine d’intégration des Navy SEALs et de l’exigence des épreuves de préparation aux grandes écoles. L’objectif : apprendre en profondeur, en peu de temps.",
+        "Pendant cinq jours, nous examinons ton ambition, ton business et ta manière de décider.",
+        "L’idée est de te préparer à affronter l’inattendu. Si tu réussis nos épreuves, c’est que tu es prêt·e à mettre en pratique ce que nous t’aurons transmis."
+      ]
+    },
+    {
+      "type": "text",
+      "title": "Notre rôle",
+      "paragraphs": [
+        "Aucune condition physique particulière ni aucune connaissance préalable ne sont requises.",
+        "Notre rôle est de te transmettre les connaissances, les méthodes et les outils nécessaires pour construire une vision cohérente avec ton ADN et celui de ton entreprise. Nous t’aidons également à identifier les points de vigilance liés à ton projet et à ta personnalité."
+      ]
+    },
+    {
+      "type": "text",
+      "title": "Un cadre exigeant et confidentiel",
+      "paragraphs": [
+        "L’expérience sera éprouvante. Elle te poussera à te remettre en question, à éprouver tes décisions et à découvrir comment tu réagis face à la difficulté.",
+        "Aucun jugement. Nous savons que cette expérience peut être difficile. Les instructeurs sont là pour t’accompagner, dans le respect de tes limites et dans un cadre de confidentialité absolue.",
+        "Ce que tu partages et ce que tu traverses pendant ces cinq jours restera au camp de base."
+      ]
+    },
+    {
+      "type": "outcomes",
+      "title": "Ce avec quoi tu repartiras",
+      "items": [
+        {
+          "title": "Un profilage approfondi",
+          "text": "Tes forces, tes angles morts et la manière de t’appuyer sur les unes et de maîtriser les autres dans ton entreprise."
+        },
+        {
+          "title": "Un business model structuré",
+          "text": "Un modèle économique cohérent avec ton profil, tes ambitions et les attentes de ton marché."
+        },
+        {
+          "title": "Une direction claire",
+          "text": "Une vision formulée, des priorités définies et des choix stratégiques assumés."
+        },
+        {
+          "title": "Ton plan d’action à 90 jours",
+          "text": "Les actions à mener, les étapes à franchir et les critères pour mesurer ta progression."
+        }
+      ]
+    }
+  ],
+  "footer": "Nous reviendrons vers toi avec les prochaines étapes."
+}

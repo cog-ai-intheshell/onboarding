@@ -51,6 +51,14 @@ def get_questions() -> list[dict]:
     } for row in rows]
 
 
+def get_experience_content() -> dict | None:
+    with database_connection() as connection:
+        row = connection.execute(
+            "SELECT content FROM site_content WHERE key = 'experience_page'"
+        ).fetchone()
+    return row["content"] if row else None
+
+
 def database_connection():
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
@@ -155,6 +163,8 @@ class handler(BaseHTTPRequestHandler):
                 self.get_draft()
             elif route == "planning":
                 self.get_planning()
+            elif route == "experience-content":
+                self.get_experience_content_route()
             elif route == "admin-responses":
                 self.get_admin_responses()
             elif route == "admin-codes":
@@ -163,6 +173,8 @@ class handler(BaseHTTPRequestHandler):
                 self.get_admin_questions()
             elif route == "admin-planning":
                 self.get_admin_planning()
+            elif route == "admin-experience-content":
+                self.get_admin_experience_content()
             else:
                 self.send_json({"message": "Route introuvable."}, HTTPStatus.NOT_FOUND)
         except Exception as error:  # La réponse reste neutre, le détail part dans les logs Vercel.
@@ -216,6 +228,8 @@ class handler(BaseHTTPRequestHandler):
         try:
             if self.requested_route() == "admin-questions":
                 self.save_admin_questions()
+            elif self.requested_route() == "admin-experience-content":
+                self.save_admin_experience_content()
             else:
                 self.send_json({"message": "Route introuvable."}, HTTPStatus.NOT_FOUND)
         except Exception as error:
@@ -416,6 +430,112 @@ class handler(BaseHTTPRequestHandler):
             return
         questions = get_questions()
         self.send_json({"questions": questions, "count": len(questions)})
+
+    def get_experience_content_route(self):
+        content = get_experience_content()
+        if not content:
+            self.send_json({"message": "La présentation est momentanément indisponible."}, HTTPStatus.SERVICE_UNAVAILABLE)
+            return
+        self.send_json({"content": content})
+
+    def get_admin_experience_content(self):
+        if not self.authenticated_admin():
+            self.send_json({"message": "Session administrateur invalide ou expirée."}, HTTPStatus.UNAUTHORIZED)
+            return
+        content = get_experience_content()
+        if not content:
+            self.send_json({"message": "Le contenu de la présentation est introuvable."}, HTTPStatus.NOT_FOUND)
+            return
+        self.send_json({"content": content})
+
+    def clean_experience_content(self, content) -> dict:
+        if not isinstance(content, dict):
+            raise ValueError("Le contenu envoyé est invalide.")
+
+        label = content.get("label", "")
+        footer = content.get("footer", "")
+        intro = content.get("intro")
+        sections = content.get("sections")
+        if not isinstance(label, str) or not label.strip() or len(label.strip()) > 200:
+            raise ValueError("Le libellé de la page est invalide.")
+        if not isinstance(footer, str) or not footer.strip() or len(footer.strip()) > 2_000:
+            raise ValueError("Le texte de fin est invalide.")
+        if not isinstance(intro, list) or not 1 <= len(intro) <= 20:
+            raise ValueError("L’introduction doit contenir entre 1 et 20 paragraphes.")
+        if not isinstance(sections, list) or not 1 <= len(sections) <= 20:
+            raise ValueError("La page doit contenir entre 1 et 20 sections.")
+
+        def clean_lines(values, field_name, maximum=30):
+            if not isinstance(values, list) or not 1 <= len(values) <= maximum:
+                raise ValueError(f"{field_name} est invalide.")
+            result = []
+            for value in values:
+                if not isinstance(value, str) or not value.strip() or len(value.strip()) > 5_000:
+                    raise ValueError(f"{field_name} contient un texte invalide.")
+                result.append(value.strip())
+            return result
+
+        cleaned_sections = []
+        for section in sections:
+            if not isinstance(section, dict):
+                raise ValueError("Une section est invalide.")
+            section_type = section.get("type")
+            title = section.get("title", "")
+            if section_type not in {"text", "list", "outcomes"}:
+                raise ValueError("Le type d’une section est invalide.")
+            if not isinstance(title, str) or not title.strip() or len(title.strip()) > 300:
+                raise ValueError("Le titre d’une section est invalide.")
+            cleaned = {"type": section_type, "title": title.strip()}
+            if section_type == "text":
+                cleaned["paragraphs"] = clean_lines(section.get("paragraphs"), "Une section de texte")
+            elif section_type == "list":
+                cleaned["items"] = clean_lines(section.get("items"), "Une liste")
+            else:
+                items = section.get("items")
+                if not isinstance(items, list) or not 1 <= len(items) <= 30:
+                    raise ValueError("Une liste de résultats est invalide.")
+                cleaned_items = []
+                for item in items:
+                    if not isinstance(item, dict):
+                        raise ValueError("Un résultat est invalide.")
+                    item_title = item.get("title", "")
+                    item_text = item.get("text", "")
+                    if not isinstance(item_title, str) or not item_title.strip() or len(item_title.strip()) > 300:
+                        raise ValueError("Le titre d’un résultat est invalide.")
+                    if not isinstance(item_text, str) or not item_text.strip() or len(item_text.strip()) > 5_000:
+                        raise ValueError("Le texte d’un résultat est invalide.")
+                    cleaned_items.append({"title": item_title.strip(), "text": item_text.strip()})
+                cleaned["items"] = cleaned_items
+            cleaned_sections.append(cleaned)
+
+        return {
+            "label": label.strip(),
+            "intro": clean_lines(intro, "L’introduction", maximum=20),
+            "sections": cleaned_sections,
+            "footer": footer.strip(),
+        }
+
+    def save_admin_experience_content(self):
+        if not self.authenticated_admin():
+            self.send_json({"message": "Session administrateur invalide ou expirée."}, HTTPStatus.UNAUTHORIZED)
+            return
+        body = self.read_body()
+        try:
+            content = self.clean_experience_content(body.get("content") if isinstance(body, dict) else None)
+        except ValueError as error:
+            self.send_json({"message": str(error)}, HTTPStatus.BAD_REQUEST)
+            return
+        with database_connection() as connection:
+            connection.execute(
+                """
+                INSERT INTO site_content (key, content, updated_at)
+                VALUES ('experience_page', %s, NOW())
+                ON CONFLICT (key)
+                DO UPDATE SET content = EXCLUDED.content, updated_at = NOW()
+                """,
+                (Jsonb(content),),
+            )
+        self.send_json({"saved": True, "content": content})
 
     def save_admin_questions(self):
         if not self.authenticated_admin():

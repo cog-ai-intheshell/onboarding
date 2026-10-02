@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=21" />
+    <link rel="stylesheet" href="styles.css?v=22" />
   </head>
   <body class="admin-page">
     <header class="site-header admin-header">
@@ -122,6 +122,27 @@
           <p class="admin-question-feedback" id="question-feedback" role="status" aria-live="polite"></p>
         </section>
 
+        <section class="admin-experience" aria-labelledby="admin-experience-title">
+          <div class="admin-section-heading">
+            <div>
+              <p class="admin-eyebrow">Dernière page du parcours</p>
+              <h2 id="admin-experience-title">Présentation du bootcamp</h2>
+            </div>
+          </div>
+          <p class="admin-section-intro">Modifie les textes affichés après la réservation. Les paragraphes sont séparés par une ligne vide et les éléments de liste par une ligne simple.</p>
+          <div class="admin-experience-editor">
+            <label>Libellé de la page<input id="experience-label" type="text" maxlength="200" /></label>
+            <label>Introduction<textarea id="experience-intro" rows="8"></textarea></label>
+            <div id="experience-section-list"></div>
+            <label>Texte de fin<textarea id="experience-footer" rows="3"></textarea></label>
+          </div>
+          <div class="admin-experience-actions">
+            <a class="button button--ghost" href="/experience.html" target="_blank" rel="noopener"><span>Prévisualiser la page</span></a>
+            <button class="button button--primary" id="save-experience" type="button"><span>Publier les modifications</span></button>
+          </div>
+          <p class="admin-experience-feedback" id="experience-feedback" role="status" aria-live="polite"></p>
+        </section>
+
         <div class="admin-section-heading admin-responses-heading">
           <div>
             <p class="admin-eyebrow">Questionnaires</p>
@@ -146,6 +167,6 @@
       </section>
     </main>
 
-    <script src="admin.js?v=6" defer></script>
+    <script src="admin.js?v=7" defer></script>
   </body>
 </html>
