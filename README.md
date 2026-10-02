@@ -9,10 +9,8 @@ Application d’onboarding en français déployable sur Vercel. Le frontend est 
 - Questionnaire vertical à réponses libres, modifiable depuis l’Admin.
 - Sauvegarde et restauration des brouillons par code.
 - Enregistrement définitif des réponses dans PostgreSQL.
-- Calendrier de réservation de sprints de cinq jours, déplaçables avant confirmation.
 - Espace administrateur protégé par un mot de passe fort.
-- Gestion des périodes disponibles ou déjà prises depuis l’Admin.
-- Confirmation de prise en compte affichée après la réservation.
+- Confirmation de prise en compte affichée après l’envoi du questionnaire.
 - Consultation et recherche des soumissions par identifiant ou code.
 - Déploiements automatiques Vercel depuis la branche `main`.
 
@@ -66,7 +64,7 @@ Le CLI indique l’adresse locale à ouvrir. L’accueil et l’administration s
 - `/`
 - `/admin.html`
 
-Après l’envoi du questionnaire, le participant est dirigé vers `/planning.html` afin de choisir ou déplacer une période de cinq jours avant de la réserver. Une confirmation lui indique ensuite que ses informations ont bien été reçues.
+Après l’envoi du questionnaire, le participant est dirigé directement vers une confirmation lui indiquant que ses informations ont bien été reçues.
 
 ## Modifier les questions
 
@@ -119,18 +117,11 @@ Le schéma se trouve dans `db/schema.sql`. Il contient :
 - `questionnaire_questions` pour le contenu et l’ordre du questionnaire ;
 - `drafts` pour les sauvegardes temporaires ;
 - `submissions` pour les réponses définitives.
-- `sprint_slots` pour les périodes proposées et les réservations associées aux codes participants.
 
 Pour créer ou mettre à jour les tables et importer les anciens fichiers JSON locaux :
 
 ```bash
 .venv/bin/python db/migrate.py
-```
-
-Pour ajouter uniquement le planning sans lire ni importer les fichiers locaux de réponses :
-
-```bash
-.venv/bin/python db/migrate_planning.py
 ```
 
 La migration est réexécutable : les codes sont mis à jour et les soumissions déjà présentes ne sont pas dupliquées.
@@ -171,12 +162,10 @@ Les variables `DATABASE_URL`, `NXT_ADMIN_PASSWORD` et `NXT_SERVER_SECRET` doiven
 | `index.html` | Accès participant. |
 | `profile.html` | Coordonnées du participant. |
 | `questionnaire.html` | Questionnaire scrollable. |
-| `planning.html` | Sélection et réservation du sprint. |
-| `experience.html` | Confirmation affichée après la réservation. |
+| `experience.html` | Confirmation affichée après l’envoi du questionnaire. |
 | `admin.html` | Administration. |
 | `styles.css` | Styles et tokens de couleur. |
 | `app.js` | Parcours participant. |
-| `planning.js` | Calendrier interactif du participant. |
 | `admin.js` | Consultation administrateur. |
 | `questions.json` | Questions et explications. |
 | `api/index.py` | API Python serverless. |
