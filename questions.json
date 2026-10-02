@@ -37,7 +37,7 @@
     },
     {
       "id": "cinq_jours_nxt",
-      "title": "6. Les cinq jours NXT",
+      "title": "6. Les cinq jours d’onboarding",
       "helper": "À la fin des cinq jours, qu’est-ce qui devrait absolument avoir changé pour que tu considères cette expérience comme une réussite ?",
       "placeholder": "À la fin des cinq jours…",
       "required": true
@@ -45,8 +45,8 @@
     {
       "id": "objectif_nxt",
       "title": "7. Dernière question",
-      "helper": "Si tu devais résumer en une phrase ce que tu veux réellement obtenir de NXT, qu’écrirais-tu ?",
-      "placeholder": "Ce que je veux réellement obtenir de NXT…",
+      "helper": "Si tu devais résumer en une phrase ce que tu veux réellement obtenir de cet accompagnement, qu’écrirais-tu ?",
+      "placeholder": "Ce que je veux réellement obtenir de cet accompagnement…",
       "required": true
     }
   ]
